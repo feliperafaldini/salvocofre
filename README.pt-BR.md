@@ -1,4 +1,4 @@
-# Failsafe Backup
+# Salvocofre Backup
 
 Plugin de backup para WordPress. Cria um conjunto datado com um dump `.sql` do banco e um `.zip` com o dump e os arquivos do site, lista e gerencia os backups no painel, restaura o banco a partir de um ZIP e pode rodar em um agendamento.
 
@@ -6,29 +6,29 @@ Este repositório contém o plugin e o ambiente local de desenvolvimento. Apenas
 
 English version: [README.md](README.md).
 
-## Estado atual (0.2.0)
+## Estado atual (0.2.1)
 
 O que funciona hoje:
 
-- Backup manual pelo botão **Backup agora**, no widget do painel ou na página **Failsafe**, protegido por nonce e capability (`manage_options` por padrão, filtrável por `failsafe_backup_capability`).
-- Conjuntos datados no formato `failsafe-YYYYMMDD-HHMMSS`, com `.sql` e `.zip`; um backup novo não sobrescreve o anterior. Colisões no mesmo segundo recebem sufixo `-2` a `-9`.
+- Backup manual pelo botão **Backup agora**, no widget do painel ou na página **Salvocofre**, protegido por nonce e capability (`manage_options` por padrão, filtrável por `salvocofre_backup_capability`).
+- Conjuntos datados no formato `salvocofre-YYYYMMDD-HHMMSS`, com `.sql` e `.zip`; um backup novo não sobrescreve o anterior. Colisões no mesmo segundo recebem sufixo `-2` a `-9`.
 - Dump de todas as tabelas do banco atual, com `DROP TABLE IF EXISTS`, `CREATE TABLE` e `INSERT` por linha, snapshot consistente, `FOREIGN_KEY_CHECKS = 0`, `COMMIT` no fim e checagem de `$wpdb->last_error` a cada consulta.
 - Dump gravado em streaming: 500 linhas por consulta, lotes de 100 `INSERT` e escrita direta no arquivo, com memória constante.
 - ZIP com o dump na raiz e todos os arquivos do site, exceto o diretório de backups, `wp-content/cache` e `wp-content/upgrade`.
 - Escrita atômica via `.part` e `WP_Filesystem`; ZIP parcial é apagado para não aparecer como backup válido.
-- Página **Failsafe** com tabela de data, arquivos, tamanho e ações, incluindo download do `.zip` e do `.sql` por `admin-post.php` com nonce e exclusão em POST com nonce por conjunto.
+- Página **Salvocofre** com tabela de data, arquivos, tamanho e ações, incluindo download do `.zip` e do `.sql` por `admin-post.php` com nonce e exclusão em POST com nonce por conjunto.
 - Retenção de backups completos, com padrão 5, faixa de 0 a 50 e 0 para manter todos. Conjuntos incompletos ficam até a exclusão manual.
 - Widget do painel com o último backup, a quantidade de conjuntos, o tamanho total em disco e o link para a lista.
-- Restauração do banco em **Ferramentas > Failsafe Restore**, com confirmação digitada do nome do backup, backup de segurança completo antes da restauração e aviso de que os arquivos do site não são alterados.
+- Restauração do banco em **Ferramentas > Salvocofre Restore**, com confirmação digitada do nome do backup, backup de segurança completo antes da restauração e aviso de que os arquivos do site não são alterados.
 - Restauração lida do disco em blocos de 64 KB, com allowlist de instruções (`SET`, `DROP/CREATE/ALTER TABLE`, `INSERT`, `REPLACE`, `LOCK/UNLOCK TABLES` e controle de transação) e commit único por execução.
 - Agendamento com as frequências horária, duas vezes ao dia, diária e semanal, lock que impede duas execuções simultâneas (agendadas ou manuais) e retomada de lock abandonado.
-- Tela **Configurações > Failsafe Backup** com o estado do agendamento (última execução, resultado, próxima execução), frequência e retenção.
+- Tela **Configurações > Salvocofre Backup** com o estado do agendamento (última execução, resultado, próxima execução), frequência e retenção.
 - Checagem prévia de memória, espaço em disco e tempo de execução antes de iniciar o dump.
-- E-mail de status para backups manuais: falha quando o endereço do administrador é válido, sucesso apenas com a opção `failsafe_email_on_success` ligada.
-- Diretório `wp-content/failsafe-backups/` criado na ativação e protegido por `.htaccess` e `index.php`.
-- Desinstalação que remove todas as opções do plugin e o transient do lock; os backups só são apagados com `failsafe_delete_backups_on_uninstall` ligado.
+- E-mail de status para backups manuais: falha quando o endereço do administrador é válido, sucesso apenas com a opção `salvocofre_email_on_success` ligada.
+- Diretório `wp-content/salvocofre-backups/` criado na ativação e protegido por `.htaccess` e `index.php`.
+- Desinstalação que remove todas as opções do plugin e o transient do lock; os backups só são apagados com `salvocofre_delete_backups_on_uninstall` ligado.
 
-O que ainda **não** existe: suporte a multisite, restauração dos arquivos do site pela interface, processamento em background para site grande e inclusão de views, triggers, procedures e events no dump. Também não há campos nas telas para `failsafe_email_on_success` e `failsafe_delete_backups_on_uninstall`; as duas opções precisam ser definidas por código ou pela tabela de options.
+O que ainda **não** existe: suporte a multisite, restauração dos arquivos do site pela interface, processamento em background para site grande e inclusão de views, triggers, procedures e events no dump. Também não há campos nas telas para `salvocofre_email_on_success` e `salvocofre_delete_backups_on_uninstall`; as duas opções precisam ser definidas por código ou pela tabela de options.
 
 ## Requisitos
 
@@ -42,7 +42,7 @@ O que ainda **não** existe: suporte a multisite, restauração dos arquivos do 
 - WP-Cron com tráfego no site ou um cron do sistema chamando `wp-cron.php` para os backups agendados rodarem no horário.
 - Instalação single-site; multisite não é suportado.
 
-**Status:** 0.2.0, em desenvolvimento. Ainda não publicado no diretório de plugins do WordPress.org.
+**Status:** 0.2.1, em desenvolvimento. Ainda não publicado no diretório de plugins do WordPress.org.
 
 ## Instalação
 
@@ -52,9 +52,9 @@ O plugin sai deste repositório como um ZIP gerado a partir de `src/`:
 ./bin/build.sh
 ```
 
-Depois envie `dist/failsafe-backup-<versão>.zip` em **Plugins > Adicionar novo > Enviar plugin**. O build só empacota arquivos: não precisa de Node, Docker nem banco.
+Depois envie `dist/salvocofre-<versão>.zip` em **Plugins > Adicionar novo > Enviar plugin**. O build só empacota arquivos: não precisa de Node, Docker nem banco.
 
-Ainda não existe ficha no diretório, então `wp plugin install failsafe-backup` não funciona e não vai funcionar até a aprovação.
+Ainda não existe ficha no diretório, então `wp plugin install salvocofre` não funciona e não vai funcionar até a aprovação.
 
 ## Por que este plugin
 
@@ -73,7 +73,7 @@ docker compose up -d      # site em http://localhost:8080
 docker compose down       # para os containers
 ```
 
-Os containers são `failsafe-wordpress-1` e `failsafe-db-1`. As credenciais locais ficam apenas em `docker-compose.yml`.
+Os containers são `salvocofre-wordpress-1` e `salvocofre-db-1`. As credenciais locais ficam apenas em `docker-compose.yml`.
 
 ## Build
 
@@ -81,7 +81,7 @@ Os containers são `failsafe-wordpress-1` e `failsafe-db-1`. As credenciais loca
 ./bin/build.sh
 ```
 
-O script empacota `src/` em dois arquivos: `dist/failsafe-backup.zip` (arquivos na raiz, para o `trunk/` do SVN) e `dist/failsafe-backup-<versão>.zip` (tudo dentro de `failsafe-backup/`, para o instalador de plugins). `src/assets/admin.js` entra nos dois; `tests/`, `stubs/`, `bin/` e os arquivos de repositório ficam fora.
+O script empacota `src/` em dois arquivos: `dist/salvocofre.zip` (arquivos na raiz, para o `trunk/` do SVN) e `dist/salvocofre-<versão>.zip` (tudo dentro de `salvocofre/`, para o instalador de plugins). `src/assets/admin.js` entra nos dois; `tests/`, `stubs/`, `bin/` e os arquivos de repositório ficam fora.
 
 ## Testes
 
@@ -92,7 +92,7 @@ O script empacota `src/` em dois arquivos: `dist/failsafe-backup.zip` (arquivos 
 
 O primeiro script exige a stack do Docker rodando e executa:
 
-1. `php -l` em `src/failsafe.php`, `src/uninstall.php`, `src/admin/*.php` e `src/includes/*.php`.
+1. `php -l` em `src/salvocofre.php`, `src/uninstall.php`, `src/admin/*.php` e `src/includes/*.php`.
 2. Testes dentro do container WordPress: `test-dump.php`, `test-stream.php`, `test-zip.php`, `test-storage.php`, `test-limits.php`, `test-restore.php`, `test-cron.php` e `test-settings.php`.
 3. Round-trip: copia o dump gerado, importa num banco `teste_ci` descartável, importa de novo para provar que o `DROP TABLE` funciona e compara a contagem de linhas de `wp_posts`, `wp_options` e `wp_users`.
 
@@ -106,34 +106,34 @@ O plugin expõe ações e filtros para que outro plugin reaja a um backup ou mud
 
 | Hook | Tipo | Para quê |
 |---|---|---|
-| `failsafe_backup_started` | ação | Uma execução começou |
-| `failsafe_backup_completed` | ação | Conjunto gravado; recebe o resultado |
-| `failsafe_backup_failed` | ação | Execução falhou; recebe o `WP_Error` |
-| `failsafe_backup_deleted` | ação | Um conjunto foi apagado |
-| `failsafe_retention_deleted` | ação | A retenção removeu conjuntos |
-| `failsafe_restore_completed` | ação | Banco restaurado |
-| `failsafe_backup_dir` | filtro | Diretório de backups |
-| `failsafe_backup_capability` | filtro | Capability exigida |
-| `failsafe_backup_excluded_paths` | filtro | Diretórios fora do ZIP |
-| `failsafe_dump_tables` | filtro | Tabelas do dump |
-| `failsafe_dump_chunk_size` | filtro | Linhas por consulta |
-| `failsafe_dump_insert_batch` | filtro | `INSERT` por lote |
-| `failsafe_required_memory_bytes` | filtro | Piso de memória |
-| `failsafe_cron_enabled` | filtro | Agendamento ligado |
-| `failsafe_cron_frequencies` | filtro | Frequências disponíveis |
-| `failsafe_cron_lock_timeout` | filtro | Timeout do lock |
-| `failsafe_restore_read_chunk` | filtro | Bloco de leitura no restore |
-| `failsafe_restore_max_entries` | filtro | Limite de entradas do ZIP |
-| `failsafe_status_email_recipient` | filtro | Destinatário do e-mail |
+| `salvocofre_backup_started` | ação | Uma execução começou |
+| `salvocofre_backup_completed` | ação | Conjunto gravado; recebe o resultado |
+| `salvocofre_backup_failed` | ação | Execução falhou; recebe o `WP_Error` |
+| `salvocofre_backup_deleted` | ação | Um conjunto foi apagado |
+| `salvocofre_retention_deleted` | ação | A retenção removeu conjuntos |
+| `salvocofre_restore_completed` | ação | Banco restaurado |
+| `salvocofre_backup_dir` | filtro | Diretório de backups |
+| `salvocofre_backup_capability` | filtro | Capability exigida |
+| `salvocofre_backup_excluded_paths` | filtro | Diretórios fora do ZIP |
+| `salvocofre_dump_tables` | filtro | Tabelas do dump |
+| `salvocofre_dump_chunk_size` | filtro | Linhas por consulta |
+| `salvocofre_dump_insert_batch` | filtro | `INSERT` por lote |
+| `salvocofre_required_memory_bytes` | filtro | Piso de memória |
+| `salvocofre_cron_enabled` | filtro | Agendamento ligado |
+| `salvocofre_cron_frequencies` | filtro | Frequências disponíveis |
+| `salvocofre_cron_lock_timeout` | filtro | Timeout do lock |
+| `salvocofre_restore_read_chunk` | filtro | Bloco de leitura no restore |
+| `salvocofre_restore_max_entries` | filtro | Limite de entradas do ZIP |
+| `salvocofre_status_email_recipient` | filtro | Destinatário do e-mail |
 
-Um add-on de destino remoto, alerta ou restauração de arquivos se pendura em `failsafe_backup_completed` e usa o caminho do conjunto, sem tocar no plugin.
+Um add-on de destino remoto, alerta ou restauração de arquivos se pendura em `salvocofre_backup_completed` e usa o caminho do conjunto, sem tocar no plugin.
 
 ## Limitações conhecidas
 
 - **Tamanho do banco**: o maior cenário medido tem 150.000 linhas, 37,8 MB de dump e 42 MB de ZIP, gerados em 8 segundos com pico de 42 MB de memória sob limite de 128 MB. A memória é constante porque o dump é gravado em streaming; o limite que resta é tempo.
 - **Timeout**: o backup roda na requisição do admin ou do WP-Cron. O cenário de 150.000 linhas levou 8 segundos para backup e 19,3 segundos para restauração; sob Apache o limite padrão é 30 segundos. Bancos várias vezes maiores precisam de processamento em background, que ainda não existe.
 - **WP-Cron depende de tráfego**: o backup agendado só começa quando o site recebe uma requisição ou quando `wp-cron.php` é chamado por um cron do sistema. Site sem visitas atrasa o agendamento.
-- **nginx**: a proteção do diretório depende de `.htaccess`. Em nginx é preciso uma regra própria no servidor ou definir `FAILSAFE_BACKUP_DIR` para um diretório fora do webroot.
+- **nginx**: a proteção do diretório depende de `.htaccess`. Em nginx é preciso uma regra própria no servidor ou definir `SALVOCOFRE_BACKUP_DIR` para um diretório fora do webroot.
 - **Multisite**: não suportado. Num multisite o dump inclui todas as tabelas da rede e todos os arquivos da instalação, sem separação por site.
 - **Restauração**: cobre apenas o banco; os arquivos do site não são restaurados. Uma falha no meio do dump pode deixar o banco parcialmente restaurado. Só conjuntos com ZIP não vazio podem ser restaurados pela tela, e o diretório temporário precisa ficar fora do webroot.
 - **Retenção durante a restauração**: a rotina não apaga o backup usado, mas o backup de segurança também passa pela retenção; um conjunto fora do limite pode ser removido nesse momento.
@@ -141,14 +141,14 @@ Um add-on de destino remoto, alerta ou restauração de arquivos se pendura em `
 - **Retenção**: só remove conjuntos completos; um conjunto com um arquivo faltando fica até a exclusão manual.
 - **Lock**: uma segunda execução durante um backup em andamento é recusada com aviso, sem fila; é preciso tentar de novo depois.
 - **E-mail**: o e-mail de status é enviado pelo backup manual. Uma falha agendada fica registrada no status e no log, mas não gera e-mail.
-- **Backups da 0.1.0**: os nomes fixos `failsafe-backup.sql` e `failsafe-backup.zip` não são listados nem removidos pela retenção.
+- **Backups da 0.1.0**: os nomes fixos `salvocofre.sql` e `salvocofre.zip` não são listados nem removidos pela retenção.
 - **Dados sensíveis**: o ZIP contém `wp-config.php` e o dump do banco, com hashes de senha e dados pessoais. Trate o arquivo como confidencial.
 
 ## Dívida conhecida
 
-- `failsafe_email_on_success` e `failsafe_delete_backups_on_uninstall` não têm campo nas telas; precisam ser definidas por código ou pela tabela de options.
+- `salvocofre_email_on_success` e `salvocofre_delete_backups_on_uninstall` não têm campo nas telas; precisam ser definidas por código ou pela tabela de options.
 - A restauração não tem limite de tamanho descompactado, apenas de número de entradas (50.000) e validação de caminhos.
-- O texto oficial é em inglês, como o diretório exige; existe `src/languages/failsafe-backup.pot`, mas nenhuma tradução publicada.
+- O texto oficial é em inglês, como o diretório exige; existe `src/languages/salvocofre.pot`, mas nenhuma tradução publicada.
 
 ## Roadmap
 

@@ -4,18 +4,18 @@
  * stored outcome of the last run.
  *
  * Run inside the WordPress container:
- *   php /tmp/failsafe-tests/test-cron.php
+ *   php /tmp/salvocofre-tests/test-cron.php
  *
  * The script snapshots every option it touches and restores it on shutdown, so
  * a failed assertion never leaves a lock behind or a changed result.
  *
- * @package Failsafe
+ * @package Salvocofre
  */
 
 require '/var/www/html/wp-load.php';
 require __DIR__ . '/assert.php';
 
-$GLOBALS['failsafe_cron_test_state'] = array(
+$GLOBALS['salvocofre_cron_test_state'] = array(
 	'snapshotted' => false,
 	'restored'    => false,
 	'lock'        => array(
@@ -42,40 +42,40 @@ $GLOBALS['failsafe_cron_test_state'] = array(
  *
  * @return void
  */
-function failsafe_test_cron_snapshot() {
-	$state = $GLOBALS['failsafe_cron_test_state'];
+function salvocofre_test_cron_snapshot() {
+	$state = $GLOBALS['salvocofre_cron_test_state'];
 
-	$lock_option = get_option( FAILSAFE_CRON_LOCK_OPTION, '__failsafe_missing__' );
+	$lock_option = get_option( SALVOCOFRE_CRON_LOCK_OPTION, '__salvocofre_missing__' );
 
 	$state['lock'] = array(
-		'exists' => '__failsafe_missing__' !== $lock_option,
+		'exists' => '__salvocofre_missing__' !== $lock_option,
 		'value'  => $lock_option,
 	);
 
-	$transient = get_transient( FAILSAFE_CRON_LOCK_TRANSIENT );
+	$transient = get_transient( SALVOCOFRE_CRON_LOCK_TRANSIENT );
 
 	$state['transient'] = array(
 		'exists'  => false !== $transient,
 		'value'   => $transient,
-		'timeout' => get_option( '_transient_timeout_' . FAILSAFE_CRON_LOCK_TRANSIENT, false ),
+		'timeout' => get_option( '_transient_timeout_' . SALVOCOFRE_CRON_LOCK_TRANSIENT, false ),
 	);
 
-	$last_run = get_option( 'failsafe_last_run', '__failsafe_missing__' );
+	$last_run = get_option( 'salvocofre_last_run', '__salvocofre_missing__' );
 
 	$state['last_run'] = array(
-		'exists' => '__failsafe_missing__' !== $last_run,
+		'exists' => '__salvocofre_missing__' !== $last_run,
 		'value'  => $last_run,
 	);
 
-	$last_result = get_option( 'failsafe_last_result', '__failsafe_missing__' );
+	$last_result = get_option( 'salvocofre_last_result', '__salvocofre_missing__' );
 
 	$state['last_result'] = array(
-		'exists' => '__failsafe_missing__' !== $last_result,
+		'exists' => '__salvocofre_missing__' !== $last_result,
 		'value'  => $last_result,
 	);
 
 	$state['snapshotted']            = true;
-	$GLOBALS['failsafe_cron_test_state'] = $state;
+	$GLOBALS['salvocofre_cron_test_state'] = $state;
 }
 
 /**
@@ -86,19 +86,19 @@ function failsafe_test_cron_snapshot() {
  *
  * @return void
  */
-function failsafe_test_cron_restore() {
-	$state = $GLOBALS['failsafe_cron_test_state'];
+function salvocofre_test_cron_restore() {
+	$state = $GLOBALS['salvocofre_cron_test_state'];
 
 	if ( empty( $state['snapshotted'] ) || ! empty( $state['restored'] ) ) {
 		return;
 	}
 
 	// Drop whatever the test created before restoring the original state.
-	delete_option( FAILSAFE_CRON_LOCK_OPTION );
-	delete_transient( FAILSAFE_CRON_LOCK_TRANSIENT );
+	delete_option( SALVOCOFRE_CRON_LOCK_OPTION );
+	delete_transient( SALVOCOFRE_CRON_LOCK_TRANSIENT );
 
 	if ( $state['lock']['exists'] ) {
-		update_option( FAILSAFE_CRON_LOCK_OPTION, $state['lock']['value'], false );
+		update_option( SALVOCOFRE_CRON_LOCK_OPTION, $state['lock']['value'], false );
 	}
 
 	if ( $state['transient']['exists'] ) {
@@ -108,11 +108,11 @@ function failsafe_test_cron_restore() {
 			$ttl = max( 1, (int) $state['transient']['timeout'] - time() );
 		}
 
-		set_transient( FAILSAFE_CRON_LOCK_TRANSIENT, $state['transient']['value'], $ttl );
+		set_transient( SALVOCOFRE_CRON_LOCK_TRANSIENT, $state['transient']['value'], $ttl );
 	}
 
 	foreach ( array( 'last_run', 'last_result' ) as $option ) {
-		$name = 'failsafe_' . $option;
+		$name = 'salvocofre_' . $option;
 
 		if ( $state[ $option ]['exists'] ) {
 			update_option( $name, $state[ $option ]['value'], false );
@@ -121,233 +121,233 @@ function failsafe_test_cron_restore() {
 		}
 	}
 
-	$GLOBALS['failsafe_cron_test_state']['restored'] = true;
+	$GLOBALS['salvocofre_cron_test_state']['restored'] = true;
 }
 
-register_shutdown_function( 'failsafe_test_cron_restore' );
+register_shutdown_function( 'salvocofre_test_cron_restore' );
 
-failsafe_test_cron_snapshot();
+salvocofre_test_cron_snapshot();
 
 // Start from a clean lock: a stale lock from an earlier manual run must not
 // make the first assertion fail.
-failsafe_cron_release_lock();
+salvocofre_cron_release_lock();
 
-echo "failsafe_cron_frequencies()\n";
+echo "salvocofre_cron_frequencies()\n";
 
-$failsafe_frequencies = failsafe_cron_frequencies();
+$salvocofre_frequencies = salvocofre_cron_frequencies();
 
-failsafe_assert( is_array( $failsafe_frequencies ), 'returns an array' );
-failsafe_assert( count( $failsafe_frequencies ) >= 4, 'offers at least four frequencies' );
+salvocofre_assert( is_array( $salvocofre_frequencies ), 'returns an array' );
+salvocofre_assert( count( $salvocofre_frequencies ) >= 4, 'offers at least four frequencies' );
 
-foreach ( array( 'hourly', 'twicedaily', 'daily', 'failsafe_weekly' ) as $failsafe_slug ) {
-	failsafe_assert( isset( $failsafe_frequencies[ $failsafe_slug ] ), 'contains the ' . $failsafe_slug . ' frequency' );
+foreach ( array( 'hourly', 'twicedaily', 'daily', 'salvocofre_weekly' ) as $salvocofre_slug ) {
+	salvocofre_assert( isset( $salvocofre_frequencies[ $salvocofre_slug ] ), 'contains the ' . $salvocofre_slug . ' frequency' );
 }
 
-echo "\nfailsafe_cron_interval()\n";
+echo "\nsalvocofre_cron_interval()\n";
 
-foreach ( array_keys( $failsafe_frequencies ) as $failsafe_slug ) {
-	$failsafe_interval = failsafe_cron_interval( $failsafe_slug );
+foreach ( array_keys( $salvocofre_frequencies ) as $salvocofre_slug ) {
+	$salvocofre_interval = salvocofre_cron_interval( $salvocofre_slug );
 
-	failsafe_assert(
-		is_int( $failsafe_interval ) && $failsafe_interval > 0,
-		'returns a positive interval for ' . $failsafe_slug
+	salvocofre_assert(
+		is_int( $salvocofre_interval ) && $salvocofre_interval > 0,
+		'returns a positive interval for ' . $salvocofre_slug
 	);
 }
 
-failsafe_assert(
-	failsafe_cron_interval( 'nonsense' ) === HOUR_IN_SECONDS,
+salvocofre_assert(
+	salvocofre_cron_interval( 'nonsense' ) === HOUR_IN_SECONDS,
 	'an unknown frequency falls back to one hour'
 );
-failsafe_assert(
-	failsafe_cron_interval( '' ) === HOUR_IN_SECONDS,
+salvocofre_assert(
+	salvocofre_cron_interval( '' ) === HOUR_IN_SECONDS,
 	'an empty frequency falls back to one hour'
 );
-failsafe_assert(
-	failsafe_cron_interval( 'failsafe_weekly' ) === WEEK_IN_SECONDS,
+salvocofre_assert(
+	salvocofre_cron_interval( 'salvocofre_weekly' ) === WEEK_IN_SECONDS,
 	'the weekly frequency uses a week'
 );
 
-echo "\nfailsafe_cron_acquire_lock()\n";
+echo "\nsalvocofre_cron_acquire_lock()\n";
 
-$failsafe_first_lock = failsafe_cron_acquire_lock();
+$salvocofre_first_lock = salvocofre_cron_acquire_lock();
 
-failsafe_assert( true === $failsafe_first_lock, 'the first call acquires the lock' );
-failsafe_assert(
-	false !== get_option( FAILSAFE_CRON_LOCK_OPTION, false ),
+salvocofre_assert( true === $salvocofre_first_lock, 'the first call acquires the lock' );
+salvocofre_assert(
+	false !== get_option( SALVOCOFRE_CRON_LOCK_OPTION, false ),
 	'stores the lock as an option'
 );
-failsafe_assert(
-	false !== get_transient( FAILSAFE_CRON_LOCK_TRANSIENT ),
+salvocofre_assert(
+	false !== get_transient( SALVOCOFRE_CRON_LOCK_TRANSIENT ),
 	'stores the lock as a transient'
 );
 
-$failsafe_second_lock = failsafe_cron_acquire_lock();
+$salvocofre_second_lock = salvocofre_cron_acquire_lock();
 
-failsafe_assert( is_wp_error( $failsafe_second_lock ), 'the second call is refused' );
-failsafe_assert(
-	is_wp_error( $failsafe_second_lock ) && 'failsafe_cron_locked' === $failsafe_second_lock->get_error_code(),
-	'the refusal uses the failsafe_cron_locked code'
+salvocofre_assert( is_wp_error( $salvocofre_second_lock ), 'the second call is refused' );
+salvocofre_assert(
+	is_wp_error( $salvocofre_second_lock ) && 'salvocofre_cron_locked' === $salvocofre_second_lock->get_error_code(),
+	'the refusal uses the salvocofre_cron_locked code'
 );
 
-failsafe_cron_release_lock();
+salvocofre_cron_release_lock();
 
-failsafe_assert(
-	false === get_option( FAILSAFE_CRON_LOCK_OPTION, false ),
+salvocofre_assert(
+	false === get_option( SALVOCOFRE_CRON_LOCK_OPTION, false ),
 	'release removes the lock option'
 );
-failsafe_assert(
-	false === get_transient( FAILSAFE_CRON_LOCK_TRANSIENT ),
+salvocofre_assert(
+	false === get_transient( SALVOCOFRE_CRON_LOCK_TRANSIENT ),
 	'release removes the lock transient'
 );
 
-$failsafe_third_lock = failsafe_cron_acquire_lock();
+$salvocofre_third_lock = salvocofre_cron_acquire_lock();
 
-failsafe_assert( true === $failsafe_third_lock, 'the lock can be acquired again after release' );
+salvocofre_assert( true === $salvocofre_third_lock, 'the lock can be acquired again after release' );
 
-failsafe_cron_release_lock();
+salvocofre_cron_release_lock();
 
-echo "\nfailsafe_cron_take_over_stale_lock()\n";
+echo "\nsalvocofre_cron_take_over_stale_lock()\n";
 
-$failsafe_stale = time() - failsafe_cron_lock_timeout() - 60;
+$salvocofre_stale = time() - salvocofre_cron_lock_timeout() - 60;
 
-update_option( FAILSAFE_CRON_LOCK_OPTION, $failsafe_stale, false );
+update_option( SALVOCOFRE_CRON_LOCK_OPTION, $salvocofre_stale, false );
 
-failsafe_assert( false === get_transient( FAILSAFE_CRON_LOCK_TRANSIENT ), 'the stale setup has no transient' );
-failsafe_assert( true === failsafe_cron_take_over_stale_lock(), 'takes over an abandoned option' );
+salvocofre_assert( false === get_transient( SALVOCOFRE_CRON_LOCK_TRANSIENT ), 'the stale setup has no transient' );
+salvocofre_assert( true === salvocofre_cron_take_over_stale_lock(), 'takes over an abandoned option' );
 
-$failsafe_refreshed = (int) get_option( FAILSAFE_CRON_LOCK_OPTION, 0 );
+$salvocofre_refreshed = (int) get_option( SALVOCOFRE_CRON_LOCK_OPTION, 0 );
 
-failsafe_assert( $failsafe_refreshed > $failsafe_stale, 'replaces the old timestamp with the current time' );
-failsafe_assert( false === failsafe_cron_take_over_stale_lock(), 'does not take over a fresh lock' );
+salvocofre_assert( $salvocofre_refreshed > $salvocofre_stale, 'replaces the old timestamp with the current time' );
+salvocofre_assert( false === salvocofre_cron_take_over_stale_lock(), 'does not take over a fresh lock' );
 
-$failsafe_blocked = failsafe_cron_acquire_lock();
+$salvocofre_blocked = salvocofre_cron_acquire_lock();
 
-failsafe_assert( is_wp_error( $failsafe_blocked ), 'the refreshed lock still blocks a second run' );
+salvocofre_assert( is_wp_error( $salvocofre_blocked ), 'the refreshed lock still blocks a second run' );
 
-failsafe_cron_release_lock();
+salvocofre_cron_release_lock();
 
 // A stale option also gets taken over through the acquire path.
-update_option( FAILSAFE_CRON_LOCK_OPTION, $failsafe_stale, false );
+update_option( SALVOCOFRE_CRON_LOCK_OPTION, $salvocofre_stale, false );
 
-failsafe_assert( true === failsafe_cron_acquire_lock(), 'acquire takes over a stale lock' );
-failsafe_assert(
-	(int) get_option( FAILSAFE_CRON_LOCK_OPTION, 0 ) > $failsafe_stale,
+salvocofre_assert( true === salvocofre_cron_acquire_lock(), 'acquire takes over a stale lock' );
+salvocofre_assert(
+	(int) get_option( SALVOCOFRE_CRON_LOCK_OPTION, 0 ) > $salvocofre_stale,
 	'acquire refreshes the stale timestamp'
 );
 
-failsafe_cron_release_lock();
+salvocofre_cron_release_lock();
 
 echo "\nlock ownership\n";
 
-failsafe_cron_release_lock( true );
+salvocofre_cron_release_lock( true );
 
-failsafe_assert( true === failsafe_cron_acquire_lock(), 'the lock can be acquired for the ownership checks' );
-failsafe_assert(
-	1 === preg_match( '/^\d+:[0-9a-f-]{36}$/', (string) get_option( FAILSAFE_CRON_LOCK_OPTION, '' ) ),
+salvocofre_assert( true === salvocofre_cron_acquire_lock(), 'the lock can be acquired for the ownership checks' );
+salvocofre_assert(
+	1 === preg_match( '/^\d+:[0-9a-f-]{36}$/', (string) get_option( SALVOCOFRE_CRON_LOCK_OPTION, '' ) ),
 	'the lock stores a timestamp and a token'
 );
 
 // Another run took the lock over while this one was stalled.
-update_option( FAILSAFE_CRON_LOCK_OPTION, time() . ':foreign-token', false );
+update_option( SALVOCOFRE_CRON_LOCK_OPTION, time() . ':foreign-token', false );
 
-failsafe_cron_release_lock();
+salvocofre_cron_release_lock();
 
-failsafe_assert(
-	false !== get_option( FAILSAFE_CRON_LOCK_OPTION, false ),
+salvocofre_assert(
+	false !== get_option( SALVOCOFRE_CRON_LOCK_OPTION, false ),
 	'release leaves a lock owned by another run in place'
 );
 
-failsafe_cron_release_lock( true );
+salvocofre_cron_release_lock( true );
 
-failsafe_assert(
-	false === get_option( FAILSAFE_CRON_LOCK_OPTION, false ),
+salvocofre_assert(
+	false === get_option( SALVOCOFRE_CRON_LOCK_OPTION, false ),
 	'force release removes the foreign lock'
 );
 
-echo "\nfailsafe_cron_store_result()\n";
+echo "\nsalvocofre_cron_store_result()\n";
 
-failsafe_cron_store_result( 'ok', '', '', 2 );
+salvocofre_cron_store_result( 'ok', '', '', 2 );
 
-$failsafe_last_run    = get_option( 'failsafe_last_run', false );
-$failsafe_last_result = get_option( 'failsafe_last_result', array() );
+$salvocofre_last_run    = get_option( 'salvocofre_last_run', false );
+$salvocofre_last_result = get_option( 'salvocofre_last_result', array() );
 
-failsafe_assert( is_numeric( $failsafe_last_run ), 'stores the run timestamp' );
-failsafe_assert(
-	is_numeric( $failsafe_last_run ) && abs( time() - (int) $failsafe_last_run ) <= 5,
+salvocofre_assert( is_numeric( $salvocofre_last_run ), 'stores the run timestamp' );
+salvocofre_assert(
+	is_numeric( $salvocofre_last_run ) && abs( time() - (int) $salvocofre_last_run ) <= 5,
 	'the run timestamp is the current time'
 );
-failsafe_assert( is_array( $failsafe_last_result ), 'stores the result as an array' );
-failsafe_assert(
-	is_array( $failsafe_last_result ) && 'ok' === $failsafe_last_result['status'],
+salvocofre_assert( is_array( $salvocofre_last_result ), 'stores the result as an array' );
+salvocofre_assert(
+	is_array( $salvocofre_last_result ) && 'ok' === $salvocofre_last_result['status'],
 	'stores the ok status'
 );
-failsafe_assert(
-	is_array( $failsafe_last_result ) && 2 === $failsafe_last_result['deleted'],
+salvocofre_assert(
+	is_array( $salvocofre_last_result ) && 2 === $salvocofre_last_result['deleted'],
 	'stores the number of deleted backups'
 );
-failsafe_assert(
-	is_array( $failsafe_last_result ) && (int) $failsafe_last_result['time'] === (int) $failsafe_last_run,
+salvocofre_assert(
+	is_array( $salvocofre_last_result ) && (int) $salvocofre_last_result['time'] === (int) $salvocofre_last_run,
 	'uses the same timestamp for the run and the result'
 );
 
-failsafe_cron_store_result( 'error', 'failsafe_test_error', 'Something failed.', 0 );
+salvocofre_cron_store_result( 'error', 'salvocofre_test_error', 'Something failed.', 0 );
 
-$failsafe_last_result = get_option( 'failsafe_last_result', array() );
+$salvocofre_last_result = get_option( 'salvocofre_last_result', array() );
 
-failsafe_assert(
-	is_array( $failsafe_last_result ) && 'error' === $failsafe_last_result['status'],
+salvocofre_assert(
+	is_array( $salvocofre_last_result ) && 'error' === $salvocofre_last_result['status'],
 	'stores the error status'
 );
-failsafe_assert(
-	is_array( $failsafe_last_result ) && 'failsafe_test_error' === $failsafe_last_result['code'],
+salvocofre_assert(
+	is_array( $salvocofre_last_result ) && 'salvocofre_test_error' === $salvocofre_last_result['code'],
 	'stores the error code'
 );
-failsafe_assert(
-	is_array( $failsafe_last_result ) && 'Something failed.' === $failsafe_last_result['message'],
+salvocofre_assert(
+	is_array( $salvocofre_last_result ) && 'Something failed.' === $salvocofre_last_result['message'],
 	'stores the error message'
 );
 
-$failsafe_normalised = failsafe_cron_last_result();
+$salvocofre_normalised = salvocofre_cron_last_result();
 
-failsafe_assert( 'error' === $failsafe_normalised['status'], 'failsafe_cron_last_result reads the error status' );
-failsafe_assert( 0 === $failsafe_normalised['deleted'], 'failsafe_cron_last_result reads the deleted count' );
+salvocofre_assert( 'error' === $salvocofre_normalised['status'], 'salvocofre_cron_last_result reads the error status' );
+salvocofre_assert( 0 === $salvocofre_normalised['deleted'], 'salvocofre_cron_last_result reads the deleted count' );
 
-failsafe_cron_store_result( 'unexpected', 'failsafe_test_error', 'Something failed.', 0 );
+salvocofre_cron_store_result( 'unexpected', 'salvocofre_test_error', 'Something failed.', 0 );
 
-$failsafe_last_result = get_option( 'failsafe_last_result', array() );
+$salvocofre_last_result = get_option( 'salvocofre_last_result', array() );
 
-failsafe_assert(
-	is_array( $failsafe_last_result ) && 'error' === $failsafe_last_result['status'],
+salvocofre_assert(
+	is_array( $salvocofre_last_result ) && 'error' === $salvocofre_last_result['status'],
 	'any status other than ok is stored as error'
 );
 
-failsafe_test_cron_restore();
+salvocofre_test_cron_restore();
 
-failsafe_assert(
-	$GLOBALS['failsafe_cron_test_state']['lock']['value'] === get_option(
-		FAILSAFE_CRON_LOCK_OPTION,
-		'__failsafe_missing__'
+salvocofre_assert(
+	$GLOBALS['salvocofre_cron_test_state']['lock']['value'] === get_option(
+		SALVOCOFRE_CRON_LOCK_OPTION,
+		'__salvocofre_missing__'
 	),
 	'restores the original lock option'
 );
-failsafe_assert(
-	$GLOBALS['failsafe_cron_test_state']['transient']['value'] === get_transient( FAILSAFE_CRON_LOCK_TRANSIENT ),
+salvocofre_assert(
+	$GLOBALS['salvocofre_cron_test_state']['transient']['value'] === get_transient( SALVOCOFRE_CRON_LOCK_TRANSIENT ),
 	'restores the original lock transient'
 );
 
 unset(
-	$failsafe_frequencies,
-	$failsafe_slug,
-	$failsafe_interval,
-	$failsafe_first_lock,
-	$failsafe_second_lock,
-	$failsafe_third_lock,
-	$failsafe_stale,
-	$failsafe_refreshed,
-	$failsafe_blocked,
-	$failsafe_last_run,
-	$failsafe_last_result,
-	$failsafe_normalised
+	$salvocofre_frequencies,
+	$salvocofre_slug,
+	$salvocofre_interval,
+	$salvocofre_first_lock,
+	$salvocofre_second_lock,
+	$salvocofre_third_lock,
+	$salvocofre_stale,
+	$salvocofre_refreshed,
+	$salvocofre_blocked,
+	$salvocofre_last_run,
+	$salvocofre_last_result,
+	$salvocofre_normalised
 );
 
-failsafe_report();
+salvocofre_report();

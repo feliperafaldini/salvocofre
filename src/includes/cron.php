@@ -6,44 +6,44 @@
  * file expose "nothing scheduled" and "already overdue" so the settings page can
  * warn the site owner instead of failing silently.
  *
- * @package Failsafe
+ * @package Salvocofre
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! defined( 'FAILSAFE_CRON_HOOK' ) ) {
-	define( 'FAILSAFE_CRON_HOOK', 'failsafe_cron_backup' );
+if ( ! defined( 'SALVOCOFRE_CRON_HOOK' ) ) {
+	define( 'SALVOCOFRE_CRON_HOOK', 'salvocofre_cron_backup' );
 }
 
-if ( ! defined( 'FAILSAFE_CRON_LOCK_OPTION' ) ) {
-	define( 'FAILSAFE_CRON_LOCK_OPTION', 'failsafe_cron_lock' );
+if ( ! defined( 'SALVOCOFRE_CRON_LOCK_OPTION' ) ) {
+	define( 'SALVOCOFRE_CRON_LOCK_OPTION', 'salvocofre_cron_lock' );
 }
 
-if ( ! defined( 'FAILSAFE_CRON_LOCK_TRANSIENT' ) ) {
-	define( 'FAILSAFE_CRON_LOCK_TRANSIENT', 'failsafe_cron_lock' );
+if ( ! defined( 'SALVOCOFRE_CRON_LOCK_TRANSIENT' ) ) {
+	define( 'SALVOCOFRE_CRON_LOCK_TRANSIENT', 'salvocofre_cron_lock' );
 }
 
-if ( ! defined( 'FAILSAFE_CRON_LOCK_TIMEOUT' ) ) {
-	define( 'FAILSAFE_CRON_LOCK_TIMEOUT', 15 * MINUTE_IN_SECONDS );
+if ( ! defined( 'SALVOCOFRE_CRON_LOCK_TIMEOUT' ) ) {
+	define( 'SALVOCOFRE_CRON_LOCK_TIMEOUT', 15 * MINUTE_IN_SECONDS );
 }
 
-if ( ! defined( 'FAILSAFE_CRON_FREQUENCY_DEFAULT' ) ) {
-	define( 'FAILSAFE_CRON_FREQUENCY_DEFAULT', 'daily' );
+if ( ! defined( 'SALVOCOFRE_CRON_FREQUENCY_DEFAULT' ) ) {
+	define( 'SALVOCOFRE_CRON_FREQUENCY_DEFAULT', 'daily' );
 }
 
-register_activation_hook( dirname( __DIR__ ) . '/failsafe.php', 'failsafe_cron_activate' );
-register_deactivation_hook( dirname( __DIR__ ) . '/failsafe.php', 'failsafe_cron_deactivate' );
+register_activation_hook( dirname( __DIR__ ) . '/salvocofre.php', 'salvocofre_cron_activate' );
+register_deactivation_hook( dirname( __DIR__ ) . '/salvocofre.php', 'salvocofre_cron_deactivate' );
 
-add_action( 'cron_schedules', 'failsafe_cron_schedules' );
-add_action( FAILSAFE_CRON_HOOK, 'failsafe_cron_run' );
+add_action( 'cron_schedules', 'salvocofre_cron_schedules' );
+add_action( SALVOCOFRE_CRON_HOOK, 'salvocofre_cron_run' );
 
 // Saving the schedule options must immediately create, move or remove the event.
-add_action( 'add_option_failsafe_schedule_enabled', 'failsafe_cron_sync_schedule' );
-add_action( 'update_option_failsafe_schedule_enabled', 'failsafe_cron_sync_schedule' );
-add_action( 'add_option_failsafe_schedule_frequency', 'failsafe_cron_sync_schedule' );
-add_action( 'update_option_failsafe_schedule_frequency', 'failsafe_cron_sync_schedule' );
+add_action( 'add_option_salvocofre_schedule_enabled', 'salvocofre_cron_sync_schedule' );
+add_action( 'update_option_salvocofre_schedule_enabled', 'salvocofre_cron_sync_schedule' );
+add_action( 'add_option_salvocofre_schedule_frequency', 'salvocofre_cron_sync_schedule' );
+add_action( 'update_option_salvocofre_schedule_frequency', 'salvocofre_cron_sync_schedule' );
 
 /**
  * Re-creates a missing event on every admin request.
@@ -53,15 +53,15 @@ add_action( 'update_option_failsafe_schedule_frequency', 'failsafe_cron_sync_sch
  *
  * @return void
  */
-function failsafe_cron_maybe_schedule() {
-	$result = failsafe_cron_schedule();
+function salvocofre_cron_maybe_schedule() {
+	$result = salvocofre_cron_schedule();
 
 	if ( is_wp_error( $result ) ) {
-		failsafe_log( $result->get_error_code() . ': ' . $result->get_error_message() );
+		salvocofre_log( $result->get_error_code() . ': ' . $result->get_error_message() );
 	}
 }
 
-add_action( 'admin_init', 'failsafe_cron_maybe_schedule' );
+add_action( 'admin_init', 'salvocofre_cron_maybe_schedule' );
 
 /**
  * Registers the weekly recurrence used by the frequency setting.
@@ -69,11 +69,11 @@ add_action( 'admin_init', 'failsafe_cron_maybe_schedule' );
  * @param array<string,array> $schedules Schedules registered so far.
  * @return array<string,array>
  */
-function failsafe_cron_schedules( $schedules ) {
-	if ( ! isset( $schedules['failsafe_weekly'] ) ) {
-		$schedules['failsafe_weekly'] = array(
+function salvocofre_cron_schedules( $schedules ) {
+	if ( ! isset( $schedules['salvocofre_weekly'] ) ) {
+		$schedules['salvocofre_weekly'] = array(
 			'interval' => WEEK_IN_SECONDS,
-			'display'  => __( 'Once weekly', 'failsafe-backup' ),
+			'display'  => __( 'Once weekly', 'salvocofre' ),
 		);
 	}
 
@@ -85,28 +85,28 @@ function failsafe_cron_schedules( $schedules ) {
  *
  * @return array<string,string>
  */
-function failsafe_cron_frequencies() {
+function salvocofre_cron_frequencies() {
 	$frequencies = array(
-		'hourly'          => __( 'Hourly', 'failsafe-backup' ),
-		'twicedaily'      => __( 'Twice daily', 'failsafe-backup' ),
-		'daily'           => __( 'Daily', 'failsafe-backup' ),
-		'failsafe_weekly' => __( 'Weekly', 'failsafe-backup' ),
+		'hourly'          => __( 'Hourly', 'salvocofre' ),
+		'twicedaily'      => __( 'Twice daily', 'salvocofre' ),
+		'daily'           => __( 'Daily', 'salvocofre' ),
+		'salvocofre_weekly' => __( 'Weekly', 'salvocofre' ),
 	);
 
-	return (array) apply_filters( 'failsafe_cron_frequencies', $frequencies );
+	return (array) apply_filters( 'salvocofre_cron_frequencies', $frequencies );
 }
 
 /**
- * Current frequency, always one of failsafe_cron_frequencies().
+ * Current frequency, always one of salvocofre_cron_frequencies().
  *
  * @return string
  */
-function failsafe_cron_frequency() {
-	$frequency = (string) get_option( 'failsafe_schedule_frequency', FAILSAFE_CRON_FREQUENCY_DEFAULT );
-	$known     = failsafe_cron_frequencies();
+function salvocofre_cron_frequency() {
+	$frequency = (string) get_option( 'salvocofre_schedule_frequency', SALVOCOFRE_CRON_FREQUENCY_DEFAULT );
+	$known     = salvocofre_cron_frequencies();
 
 	if ( ! isset( $known[ $frequency ] ) ) {
-		return FAILSAFE_CRON_FREQUENCY_DEFAULT;
+		return SALVOCOFRE_CRON_FREQUENCY_DEFAULT;
 	}
 
 	return $frequency;
@@ -117,8 +117,8 @@ function failsafe_cron_frequency() {
  *
  * @return bool
  */
-function failsafe_cron_enabled() {
-	return (bool) apply_filters( 'failsafe_cron_enabled', (bool) get_option( 'failsafe_schedule_enabled', true ) );
+function salvocofre_cron_enabled() {
+	return (bool) apply_filters( 'salvocofre_cron_enabled', (bool) get_option( 'salvocofre_schedule_enabled', true ) );
 }
 
 /**
@@ -127,7 +127,7 @@ function failsafe_cron_enabled() {
  * @param string $frequency Recurrence slug.
  * @return int
  */
-function failsafe_cron_interval( $frequency ) {
+function salvocofre_cron_interval( $frequency ) {
 	$schedules = wp_get_schedules();
 
 	if ( isset( $schedules[ $frequency ]['interval'] ) ) {
@@ -145,27 +145,27 @@ function failsafe_cron_interval( $frequency ) {
  *
  * @return true|WP_Error
  */
-function failsafe_cron_schedule() {
-	if ( ! failsafe_cron_enabled() ) {
-		failsafe_cron_unschedule();
+function salvocofre_cron_schedule() {
+	if ( ! salvocofre_cron_enabled() ) {
+		salvocofre_cron_unschedule();
 
 		return true;
 	}
 
-	$frequency = failsafe_cron_frequency();
-	$next_run  = wp_next_scheduled( FAILSAFE_CRON_HOOK );
+	$frequency = salvocofre_cron_frequency();
+	$next_run  = wp_next_scheduled( SALVOCOFRE_CRON_HOOK );
 
 	if ( $next_run ) {
-		if ( wp_get_schedule( FAILSAFE_CRON_HOOK ) === $frequency ) {
+		if ( wp_get_schedule( SALVOCOFRE_CRON_HOOK ) === $frequency ) {
 			return true;
 		}
 
 		// The frequency changed: drop the old event before creating the new one.
-		failsafe_cron_unschedule();
+		salvocofre_cron_unschedule();
 	}
 
-	$timestamp = time() + failsafe_cron_interval( $frequency );
-	$scheduled = wp_schedule_event( $timestamp, $frequency, FAILSAFE_CRON_HOOK );
+	$timestamp = time() + salvocofre_cron_interval( $frequency );
+	$scheduled = wp_schedule_event( $timestamp, $frequency, SALVOCOFRE_CRON_HOOK );
 
 	if ( is_wp_error( $scheduled ) ) {
 		return $scheduled;
@@ -173,8 +173,8 @@ function failsafe_cron_schedule() {
 
 	if ( true !== $scheduled ) {
 		return new WP_Error(
-			'failsafe_cron_schedule_failed',
-			__( 'Could not schedule the automatic backup.', 'failsafe-backup' )
+			'salvocofre_cron_schedule_failed',
+			__( 'Could not schedule the automatic backup.', 'salvocofre' )
 		);
 	}
 
@@ -186,8 +186,8 @@ function failsafe_cron_schedule() {
  *
  * @return void
  */
-function failsafe_cron_unschedule() {
-	wp_clear_scheduled_hook( FAILSAFE_CRON_HOOK );
+function salvocofre_cron_unschedule() {
+	wp_clear_scheduled_hook( SALVOCOFRE_CRON_HOOK );
 }
 
 /**
@@ -197,11 +197,11 @@ function failsafe_cron_unschedule() {
  *
  * @return void
  */
-function failsafe_cron_sync_schedule() {
-	$result = failsafe_cron_schedule();
+function salvocofre_cron_sync_schedule() {
+	$result = salvocofre_cron_schedule();
 
 	if ( is_wp_error( $result ) ) {
-		failsafe_log( $result->get_error_code() . ': ' . $result->get_error_message() );
+		salvocofre_log( $result->get_error_code() . ': ' . $result->get_error_message() );
 	}
 }
 
@@ -210,11 +210,11 @@ function failsafe_cron_sync_schedule() {
  *
  * @return void
  */
-function failsafe_cron_activate() {
-	add_option( 'failsafe_schedule_enabled', true );
-	add_option( 'failsafe_schedule_frequency', FAILSAFE_CRON_FREQUENCY_DEFAULT );
+function salvocofre_cron_activate() {
+	add_option( 'salvocofre_schedule_enabled', true );
+	add_option( 'salvocofre_schedule_frequency', SALVOCOFRE_CRON_FREQUENCY_DEFAULT );
 
-	failsafe_cron_sync_schedule();
+	salvocofre_cron_sync_schedule();
 }
 
 /**
@@ -222,9 +222,9 @@ function failsafe_cron_activate() {
  *
  * @return void
  */
-function failsafe_cron_deactivate() {
-	failsafe_cron_unschedule();
-	failsafe_cron_release_lock();
+function salvocofre_cron_deactivate() {
+	salvocofre_cron_unschedule();
+	salvocofre_cron_release_lock();
 }
 
 /**
@@ -232,8 +232,8 @@ function failsafe_cron_deactivate() {
  *
  * @return int
  */
-function failsafe_cron_lock_timeout() {
-	return max( 1, (int) apply_filters( 'failsafe_cron_lock_timeout', FAILSAFE_CRON_LOCK_TIMEOUT ) );
+function salvocofre_cron_lock_timeout() {
+	return max( 1, (int) apply_filters( 'salvocofre_cron_lock_timeout', SALVOCOFRE_CRON_LOCK_TIMEOUT ) );
 }
 
 /**
@@ -244,21 +244,21 @@ function failsafe_cron_lock_timeout() {
  *
  * @return true|WP_Error
  */
-function failsafe_cron_acquire_lock() {
-	if ( false !== get_transient( FAILSAFE_CRON_LOCK_TRANSIENT ) ) {
-		return new WP_Error( 'failsafe_cron_locked', __( 'A scheduled backup is already running.', 'failsafe-backup' ) );
+function salvocofre_cron_acquire_lock() {
+	if ( false !== get_transient( SALVOCOFRE_CRON_LOCK_TRANSIENT ) ) {
+		return new WP_Error( 'salvocofre_cron_locked', __( 'A scheduled backup is already running.', 'salvocofre' ) );
 	}
 
 	$token = wp_generate_uuid4();
 	$value = time() . ':' . $token;
 
-	if ( add_option( FAILSAFE_CRON_LOCK_OPTION, $value, '', false ) ) {
-		$GLOBALS['failsafe_cron_lock_value'] = $value;
-	} elseif ( ! failsafe_cron_take_over_stale_lock( $token ) ) {
-		return new WP_Error( 'failsafe_cron_locked', __( 'A scheduled backup is already running.', 'failsafe-backup' ) );
+	if ( add_option( SALVOCOFRE_CRON_LOCK_OPTION, $value, '', false ) ) {
+		$GLOBALS['salvocofre_cron_lock_value'] = $value;
+	} elseif ( ! salvocofre_cron_take_over_stale_lock( $token ) ) {
+		return new WP_Error( 'salvocofre_cron_locked', __( 'A scheduled backup is already running.', 'salvocofre' ) );
 	}
 
-	set_transient( FAILSAFE_CRON_LOCK_TRANSIENT, time(), failsafe_cron_lock_timeout() );
+	set_transient( SALVOCOFRE_CRON_LOCK_TRANSIENT, time(), salvocofre_cron_lock_timeout() );
 
 	return true;
 }
@@ -272,7 +272,7 @@ function failsafe_cron_acquire_lock() {
  * @param string $token Optional lock token; generated when empty.
  * @return bool True when this request now owns the lock.
  */
-function failsafe_cron_take_over_stale_lock( $token = '' ) {
+function salvocofre_cron_take_over_stale_lock( $token = '' ) {
 	global $wpdb;
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The raw value is required for the compare-and-swap below; get_option() would hand back a cached copy that another request may already have replaced.
@@ -280,7 +280,7 @@ function failsafe_cron_take_over_stale_lock( $token = '' ) {
 		$wpdb->prepare(
 			'SELECT option_value FROM %i WHERE option_name = %s',
 			$wpdb->options,
-			FAILSAFE_CRON_LOCK_OPTION
+			SALVOCOFRE_CRON_LOCK_OPTION
 		)
 	);
 
@@ -291,7 +291,7 @@ function failsafe_cron_take_over_stale_lock( $token = '' ) {
 	// The stored value is "timestamp:token"; older locks hold a bare timestamp.
 	$started = (int) $raw;
 
-	if ( $started <= 0 || ( time() - $started ) < failsafe_cron_lock_timeout() ) {
+	if ( $started <= 0 || ( time() - $started ) < salvocofre_cron_lock_timeout() ) {
 		return false;
 	}
 
@@ -307,20 +307,20 @@ function failsafe_cron_take_over_stale_lock( $token = '' ) {
 			'UPDATE %i SET option_value = %s WHERE option_name = %s AND option_value = %s',
 			$wpdb->options,
 			$value,
-			FAILSAFE_CRON_LOCK_OPTION,
+			SALVOCOFRE_CRON_LOCK_OPTION,
 			$raw
 		)
 	);
 
-	wp_cache_delete( FAILSAFE_CRON_LOCK_OPTION, 'options' );
+	wp_cache_delete( SALVOCOFRE_CRON_LOCK_OPTION, 'options' );
 
 	if ( 1 !== (int) $updated ) {
 		return false;
 	}
 
-	$GLOBALS['failsafe_cron_lock_value'] = $value;
+	$GLOBALS['salvocofre_cron_lock_value'] = $value;
 
-	failsafe_log( 'cron: took over a stale backup lock' );
+	salvocofre_log( 'cron: took over a stale backup lock' );
 
 	return true;
 }
@@ -334,10 +334,10 @@ function failsafe_cron_take_over_stale_lock( $token = '' ) {
  * @param bool $force Delete the lock even when this request does not own it.
  * @return void
  */
-function failsafe_cron_release_lock( $force = false ) {
+function salvocofre_cron_release_lock( $force = false ) {
 	global $wpdb;
 
-	$value = isset( $GLOBALS['failsafe_cron_lock_value'] ) ? (string) $GLOBALS['failsafe_cron_lock_value'] : '';
+	$value = isset( $GLOBALS['salvocofre_cron_lock_value'] ) ? (string) $GLOBALS['salvocofre_cron_lock_value'] : '';
 
 	if ( ! $force && '' !== $value ) {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Conditional delete, so a run that lost its lock cannot remove the lock another run is holding.
@@ -345,24 +345,24 @@ function failsafe_cron_release_lock( $force = false ) {
 			$wpdb->prepare(
 				'DELETE FROM %i WHERE option_name = %s AND option_value = %s',
 				$wpdb->options,
-				FAILSAFE_CRON_LOCK_OPTION,
+				SALVOCOFRE_CRON_LOCK_OPTION,
 				$value
 			)
 		);
 
-		wp_cache_delete( FAILSAFE_CRON_LOCK_OPTION, 'options' );
+		wp_cache_delete( SALVOCOFRE_CRON_LOCK_OPTION, 'options' );
 
 		if ( 1 !== (int) $deleted ) {
-			failsafe_log( 'cron: lock belongs to another run, leaving it in place' );
+			salvocofre_log( 'cron: lock belongs to another run, leaving it in place' );
 			return;
 		}
 	} else {
-		delete_option( FAILSAFE_CRON_LOCK_OPTION );
+		delete_option( SALVOCOFRE_CRON_LOCK_OPTION );
 	}
 
-	unset( $GLOBALS['failsafe_cron_lock_value'] );
+	unset( $GLOBALS['salvocofre_cron_lock_value'] );
 
-	delete_transient( FAILSAFE_CRON_LOCK_TRANSIENT );
+	delete_transient( SALVOCOFRE_CRON_LOCK_TRANSIENT );
 }
 
 /**
@@ -370,11 +370,11 @@ function failsafe_cron_release_lock( $force = false ) {
  *
  * @return void
  */
-function failsafe_cron_run() {
-	$result = failsafe_cron_execute();
+function salvocofre_cron_run() {
+	$result = salvocofre_cron_execute();
 
 	if ( is_wp_error( $result ) ) {
-		failsafe_log( $result->get_error_code() . ': ' . $result->get_error_message() );
+		salvocofre_log( $result->get_error_code() . ': ' . $result->get_error_message() );
 	}
 }
 
@@ -383,33 +383,33 @@ function failsafe_cron_run() {
  *
  * @return true|WP_Error
  */
-function failsafe_cron_execute() {
-	$lock = failsafe_cron_acquire_lock();
+function salvocofre_cron_execute() {
+	$lock = salvocofre_cron_acquire_lock();
 
 	if ( is_wp_error( $lock ) ) {
 		return $lock;
 	}
 
 	try {
-		$backup = failsafe_create_backup();
+		$backup = salvocofre_create_backup();
 
 		if ( is_wp_error( $backup ) ) {
-			failsafe_cron_store_result( 'error', $backup->get_error_code(), $backup->get_error_message() );
+			salvocofre_cron_store_result( 'error', $backup->get_error_code(), $backup->get_error_message() );
 
 			return $backup;
 		}
 
-		$deleted = failsafe_apply_retention();
+		$deleted = salvocofre_apply_retention();
 
-		failsafe_cron_store_result( 'ok', '', '', count( $deleted ) );
+		salvocofre_cron_store_result( 'ok', '', '', count( $deleted ) );
 
 		return true;
 	} catch ( Throwable $exception ) {
-		failsafe_cron_store_result( 'error', 'failsafe_cron_exception', $exception->getMessage() );
+		salvocofre_cron_store_result( 'error', 'salvocofre_cron_exception', $exception->getMessage() );
 
-		return new WP_Error( 'failsafe_cron_exception', $exception->getMessage() );
+		return new WP_Error( 'salvocofre_cron_exception', $exception->getMessage() );
 	} finally {
-		failsafe_cron_release_lock();
+		salvocofre_cron_release_lock();
 	}
 }
 
@@ -422,12 +422,12 @@ function failsafe_cron_execute() {
  * @param int    $deleted Number of old backups removed by retention.
  * @return void
  */
-function failsafe_cron_store_result( $status, $code = '', $message = '', $deleted = 0 ) {
+function salvocofre_cron_store_result( $status, $code = '', $message = '', $deleted = 0 ) {
 	$now = time();
 
-	update_option( 'failsafe_last_run', $now, false );
+	update_option( 'salvocofre_last_run', $now, false );
 	update_option(
-		'failsafe_last_result',
+		'salvocofre_last_result',
 		array(
 			'status'  => ( 'ok' === $status ) ? 'ok' : 'error',
 			'code'    => (string) $code,
@@ -444,8 +444,8 @@ function failsafe_cron_store_result( $status, $code = '', $message = '', $delete
  *
  * @return int
  */
-function failsafe_cron_last_run() {
-	return (int) get_option( 'failsafe_last_run', 0 );
+function salvocofre_cron_last_run() {
+	return (int) get_option( 'salvocofre_last_run', 0 );
 }
 
 /**
@@ -453,8 +453,8 @@ function failsafe_cron_last_run() {
  *
  * @return array{status:string,code:string,message:string,time:int,deleted:int}
  */
-function failsafe_cron_last_result() {
-	$stored = get_option( 'failsafe_last_result', array() );
+function salvocofre_cron_last_result() {
+	$stored = get_option( 'salvocofre_last_result', array() );
 
 	$result = wp_parse_args(
 		is_array( $stored ) ? $stored : array(),
@@ -484,18 +484,18 @@ function failsafe_cron_last_result() {
  *
  * @return array<string,mixed>
  */
-function failsafe_cron_status() {
-	$enabled  = failsafe_cron_enabled();
-	$next_run = (int) wp_next_scheduled( FAILSAFE_CRON_HOOK );
+function salvocofre_cron_status() {
+	$enabled  = salvocofre_cron_enabled();
+	$next_run = (int) wp_next_scheduled( SALVOCOFRE_CRON_HOOK );
 
 	return array(
 		'enabled'       => $enabled,
-		'frequency'     => failsafe_cron_frequency(),
+		'frequency'     => salvocofre_cron_frequency(),
 		'next_run'      => $next_run,
 		'overdue'       => $next_run > 0 && $next_run < time(),
 		'not_scheduled' => $enabled && 0 === $next_run,
-		'last_run'      => failsafe_cron_last_run(),
-		'last_result'   => failsafe_cron_last_result(),
+		'last_run'      => salvocofre_cron_last_run(),
+		'last_result'   => salvocofre_cron_last_result(),
 		'cron_disabled' => defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON,
 	);
 }

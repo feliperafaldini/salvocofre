@@ -3,40 +3,40 @@
  * Unit checks for the storage layer: names, paths, listing, retention and atomic writes.
  *
  * Run inside the WordPress container:
- *   php /var/www/html/wp-content/plugins/failsafe-backup/tests/test-storage.php
+ *   php /var/www/html/wp-content/plugins/salvocofre/tests/test-storage.php
  *
- * @package Failsafe
+ * @package Salvocofre
  */
 
 require '/var/www/html/wp-load.php';
 require __DIR__ . '/assert.php';
 
-$GLOBALS['failsafe_storage_test_files'] = array();
-$GLOBALS['failsafe_storage_test_dirs']  = array();
+$GLOBALS['salvocofre_storage_test_files'] = array();
+$GLOBALS['salvocofre_storage_test_dirs']  = array();
 
-$failsafe_original_retention = get_option( 'failsafe_retention_count', '__failsafe_missing__' );
+$salvocofre_original_retention = get_option( 'salvocofre_retention_count', '__salvocofre_missing__' );
 
-$GLOBALS['failsafe_storage_test_retention'] = array(
-	'exists'   => '__failsafe_missing__' !== $failsafe_original_retention,
-	'value'    => $failsafe_original_retention,
+$GLOBALS['salvocofre_storage_test_retention'] = array(
+	'exists'   => '__salvocofre_missing__' !== $salvocofre_original_retention,
+	'value'    => $salvocofre_original_retention,
 	'restored' => false,
 );
 
-unset( $failsafe_original_retention );
+unset( $salvocofre_original_retention );
 
 /**
  * Deletes every file created by the test.
  *
  * @return void
  */
-function failsafe_test_cleanup_files() {
-	foreach ( (array) $GLOBALS['failsafe_storage_test_files'] as $file ) {
+function salvocofre_test_cleanup_files() {
+	foreach ( (array) $GLOBALS['salvocofre_storage_test_files'] as $file ) {
 		if ( file_exists( $file ) ) {
 			@unlink( $file );
 		}
 	}
 
-	$GLOBALS['failsafe_storage_test_files'] = array();
+	$GLOBALS['salvocofre_storage_test_files'] = array();
 }
 
 /**
@@ -44,8 +44,8 @@ function failsafe_test_cleanup_files() {
  *
  * @return void
  */
-function failsafe_test_cleanup_dirs() {
-	foreach ( (array) $GLOBALS['failsafe_storage_test_dirs'] as $dir ) {
+function salvocofre_test_cleanup_dirs() {
+	foreach ( (array) $GLOBALS['salvocofre_storage_test_dirs'] as $dir ) {
 		if ( ! is_dir( $dir ) ) {
 			continue;
 		}
@@ -59,7 +59,7 @@ function failsafe_test_cleanup_dirs() {
 		@rmdir( $dir );
 	}
 
-	$GLOBALS['failsafe_storage_test_dirs'] = array();
+	$GLOBALS['salvocofre_storage_test_dirs'] = array();
 }
 
 /**
@@ -67,20 +67,20 @@ function failsafe_test_cleanup_dirs() {
  *
  * @return void
  */
-function failsafe_test_restore_retention() {
-	$state = $GLOBALS['failsafe_storage_test_retention'];
+function salvocofre_test_restore_retention() {
+	$state = $GLOBALS['salvocofre_storage_test_retention'];
 
 	if ( ! empty( $state['restored'] ) ) {
 		return;
 	}
 
 	if ( $state['exists'] ) {
-		update_option( 'failsafe_retention_count', $state['value'] );
+		update_option( 'salvocofre_retention_count', $state['value'] );
 	} else {
-		delete_option( 'failsafe_retention_count' );
+		delete_option( 'salvocofre_retention_count' );
 	}
 
-	$GLOBALS['failsafe_storage_test_retention']['restored'] = true;
+	$GLOBALS['salvocofre_storage_test_retention']['restored'] = true;
 }
 
 /**
@@ -88,13 +88,13 @@ function failsafe_test_restore_retention() {
  *
  * @return void
  */
-function failsafe_test_shutdown() {
-	failsafe_test_cleanup_files();
-	failsafe_test_cleanup_dirs();
-	failsafe_test_restore_retention();
+function salvocofre_test_shutdown() {
+	salvocofre_test_cleanup_files();
+	salvocofre_test_cleanup_dirs();
+	salvocofre_test_restore_retention();
 }
 
-register_shutdown_function( 'failsafe_test_shutdown' );
+register_shutdown_function( 'salvocofre_test_shutdown' );
 
 /**
  * Writes a file, sets its modification time and tracks it for cleanup.
@@ -104,18 +104,18 @@ register_shutdown_function( 'failsafe_test_shutdown' );
  * @param int    $mtime    Modification time as a Unix timestamp.
  * @return true|WP_Error
  */
-function failsafe_test_write_file( $path, $contents, $mtime ) {
+function salvocofre_test_write_file( $path, $contents, $mtime ) {
 	if ( false === file_put_contents( $path, $contents ) ) {
-		return new WP_Error( 'failsafe_test_write_failed', 'Could not write ' . $path . '.' );
+		return new WP_Error( 'salvocofre_test_write_failed', 'Could not write ' . $path . '.' );
 	}
 
 	if ( ! touch( $path, $mtime ) ) {
 		@unlink( $path );
 
-		return new WP_Error( 'failsafe_test_touch_failed', 'Could not set the modification time of ' . $path . '.' );
+		return new WP_Error( 'salvocofre_test_touch_failed', 'Could not set the modification time of ' . $path . '.' );
 	}
 
-	$GLOBALS['failsafe_storage_test_files'][] = $path;
+	$GLOBALS['salvocofre_storage_test_files'][] = $path;
 
 	clearstatcache( true, $path );
 
@@ -132,8 +132,8 @@ function failsafe_test_write_file( $path, $contents, $mtime ) {
  * @param string|null $sql_contents  SQL file contents, or null to leave the set incomplete.
  * @return true|WP_Error
  */
-function failsafe_test_create_set( $directory, $base, $mtime, $zip_contents, $sql_contents ) {
-	$created = failsafe_test_write_file( $directory . '/' . $base . '.zip', $zip_contents, $mtime );
+function salvocofre_test_create_set( $directory, $base, $mtime, $zip_contents, $sql_contents ) {
+	$created = salvocofre_test_write_file( $directory . '/' . $base . '.zip', $zip_contents, $mtime );
 
 	if ( is_wp_error( $created ) ) {
 		return $created;
@@ -143,7 +143,7 @@ function failsafe_test_create_set( $directory, $base, $mtime, $zip_contents, $sq
 		return true;
 	}
 
-	return failsafe_test_write_file( $directory . '/' . $base . '.sql', $sql_contents, $mtime );
+	return salvocofre_test_write_file( $directory . '/' . $base . '.sql', $sql_contents, $mtime );
 }
 
 /**
@@ -151,327 +151,327 @@ function failsafe_test_create_set( $directory, $base, $mtime, $zip_contents, $sq
  *
  * @return string|WP_Error
  */
-function failsafe_test_temp_dir() {
-	$directory = rtrim( sys_get_temp_dir(), '/\\' ) . '/failsafe-storage-' . getmypid() . '-' . uniqid();
+function salvocofre_test_temp_dir() {
+	$directory = rtrim( sys_get_temp_dir(), '/\\' ) . '/salvocofre-storage-' . getmypid() . '-' . uniqid();
 
 	if ( ! mkdir( $directory, 0700 ) ) {
-		return new WP_Error( 'failsafe_test_mkdir_failed', 'Could not create ' . $directory . '.' );
+		return new WP_Error( 'salvocofre_test_mkdir_failed', 'Could not create ' . $directory . '.' );
 	}
 
-	$GLOBALS['failsafe_storage_test_dirs'][] = $directory;
+	$GLOBALS['salvocofre_storage_test_dirs'][] = $directory;
 
 	return $directory;
 }
 
-echo "failsafe_is_valid_backup_name()\n";
+echo "salvocofre_is_valid_backup_name()\n";
 
-failsafe_assert( failsafe_is_valid_backup_name( 'failsafe-20261024-153000' ), 'accepts a plain base name' );
-failsafe_assert( failsafe_is_valid_backup_name( 'failsafe-20261024-153000-2' ), 'accepts a duplicate suffix' );
+salvocofre_assert( salvocofre_is_valid_backup_name( 'salvocofre-20261024-153000' ), 'accepts a plain base name' );
+salvocofre_assert( salvocofre_is_valid_backup_name( 'salvocofre-20261024-153000-2' ), 'accepts a duplicate suffix' );
 
-$failsafe_invalid_names = array(
+$salvocofre_invalid_names = array(
 	'../x'                                             => 'path traversal',
-	'failsafe-2026-153000'                             => 'a short date',
+	'salvocofre-2026-153000'                             => 'a short date',
 	''                                                 => 'an empty string',
-	'/var/www/html/failsafe-20261024-153000'           => 'an absolute path',
-	'failsafe-20261024-153000-' . str_repeat( '9', 20 ) => 'a name longer than 40 characters',
-	'failsafe-20261024-153000.zip'                     => 'a file extension',
+	'/var/www/html/salvocofre-20261024-153000'           => 'an absolute path',
+	'salvocofre-20261024-153000-' . str_repeat( '9', 20 ) => 'a name longer than 40 characters',
+	'salvocofre-20261024-153000.zip'                     => 'a file extension',
 );
 
-foreach ( $failsafe_invalid_names as $failsafe_name => $failsafe_reason ) {
-	failsafe_assert( ! failsafe_is_valid_backup_name( $failsafe_name ), 'rejects ' . $failsafe_reason );
+foreach ( $salvocofre_invalid_names as $salvocofre_name => $salvocofre_reason ) {
+	salvocofre_assert( ! salvocofre_is_valid_backup_name( $salvocofre_name ), 'rejects ' . $salvocofre_reason );
 }
 
-unset( $failsafe_invalid_names, $failsafe_name, $failsafe_reason );
+unset( $salvocofre_invalid_names, $salvocofre_name, $salvocofre_reason );
 
-echo "\nfailsafe_backup_path()\n";
+echo "\nsalvocofre_backup_path()\n";
 
-$failsafe_base      = 'failsafe-20261024-153000';
-$failsafe_directory = rtrim( failsafe_backup_dir(), '/\\' );
+$salvocofre_base      = 'salvocofre-20261024-153000';
+$salvocofre_directory = rtrim( salvocofre_backup_dir(), '/\\' );
 
-foreach ( array( 'zip', 'sql' ) as $failsafe_extension ) {
-	$failsafe_path = failsafe_backup_path( $failsafe_base, $failsafe_extension );
+foreach ( array( 'zip', 'sql' ) as $salvocofre_extension ) {
+	$salvocofre_path = salvocofre_backup_path( $salvocofre_base, $salvocofre_extension );
 
-	failsafe_assert( ! is_wp_error( $failsafe_path ), 'accepts the ' . $failsafe_extension . ' extension' );
-	failsafe_assert(
-		is_string( $failsafe_path ) && $failsafe_directory . '/' . $failsafe_base . '.' . $failsafe_extension === $failsafe_path,
-		'builds the ' . $failsafe_extension . ' path inside the backup directory'
+	salvocofre_assert( ! is_wp_error( $salvocofre_path ), 'accepts the ' . $salvocofre_extension . ' extension' );
+	salvocofre_assert(
+		is_string( $salvocofre_path ) && $salvocofre_directory . '/' . $salvocofre_base . '.' . $salvocofre_extension === $salvocofre_path,
+		'builds the ' . $salvocofre_extension . ' path inside the backup directory'
 	);
 }
 
-$failsafe_invalid_path = failsafe_backup_path( '../x', 'zip' );
+$salvocofre_invalid_path = salvocofre_backup_path( '../x', 'zip' );
 
-failsafe_assert( is_wp_error( $failsafe_invalid_path ), 'returns WP_Error for an invalid name' );
-failsafe_assert(
-	is_wp_error( $failsafe_invalid_path ) && 'failsafe_invalid_backup' === $failsafe_invalid_path->get_error_code(),
+salvocofre_assert( is_wp_error( $salvocofre_invalid_path ), 'returns WP_Error for an invalid name' );
+salvocofre_assert(
+	is_wp_error( $salvocofre_invalid_path ) && 'salvocofre_invalid_backup' === $salvocofre_invalid_path->get_error_code(),
 	'uses the invalid backup error code'
 );
 
-foreach ( array( 'php', 'txt', 'zip.php', '' ) as $failsafe_extension ) {
-	$failsafe_path = failsafe_backup_path( $failsafe_base, $failsafe_extension );
+foreach ( array( 'php', 'txt', 'zip.php', '' ) as $salvocofre_extension ) {
+	$salvocofre_path = salvocofre_backup_path( $salvocofre_base, $salvocofre_extension );
 
-	failsafe_assert( is_wp_error( $failsafe_path ), 'returns WP_Error for the "' . $failsafe_extension . '" extension' );
+	salvocofre_assert( is_wp_error( $salvocofre_path ), 'returns WP_Error for the "' . $salvocofre_extension . '" extension' );
 }
 
-unset( $failsafe_base, $failsafe_directory, $failsafe_extension, $failsafe_path, $failsafe_invalid_path );
+unset( $salvocofre_base, $salvocofre_directory, $salvocofre_extension, $salvocofre_path, $salvocofre_invalid_path );
 
-echo "\nfailsafe_get_backups()\n";
+echo "\nsalvocofre_get_backups()\n";
 
-$failsafe_directory = rtrim( failsafe_backup_dir(), '/\\' );
+$salvocofre_directory = rtrim( salvocofre_backup_dir(), '/\\' );
 
-failsafe_assert( is_dir( $failsafe_directory ), 'backup directory exists' );
-failsafe_assert( false !== failsafe_fs(), 'initializes the WordPress filesystem' );
+salvocofre_assert( is_dir( $salvocofre_directory ), 'backup directory exists' );
+salvocofre_assert( false !== salvocofre_fs(), 'initializes the WordPress filesystem' );
 
-$failsafe_newest     = 'failsafe-19990101-000004';
-$failsafe_middle     = 'failsafe-19990101-000003';
-$failsafe_incomplete = 'failsafe-19990101-000002';
-$failsafe_empty_zip  = 'failsafe-19990101-000001';
-$failsafe_mtime      = 1000000000;
+$salvocofre_newest     = 'salvocofre-19990101-000004';
+$salvocofre_middle     = 'salvocofre-19990101-000003';
+$salvocofre_incomplete = 'salvocofre-19990101-000002';
+$salvocofre_empty_zip  = 'salvocofre-19990101-000001';
+$salvocofre_mtime      = 1000000000;
 
-$failsafe_sets = array(
-	$failsafe_newest     => array( str_repeat( 'z', 32 ), str_repeat( 's', 8 ), $failsafe_mtime + 400 ),
-	$failsafe_middle     => array( str_repeat( 'z', 16 ), str_repeat( 's', 4 ), $failsafe_mtime + 300 ),
-	$failsafe_incomplete => array( str_repeat( 'z', 12 ), null, $failsafe_mtime + 200 ),
-	$failsafe_empty_zip  => array( '', str_repeat( 's', 3 ), $failsafe_mtime + 100 ),
+$salvocofre_sets = array(
+	$salvocofre_newest     => array( str_repeat( 'z', 32 ), str_repeat( 's', 8 ), $salvocofre_mtime + 400 ),
+	$salvocofre_middle     => array( str_repeat( 'z', 16 ), str_repeat( 's', 4 ), $salvocofre_mtime + 300 ),
+	$salvocofre_incomplete => array( str_repeat( 'z', 12 ), null, $salvocofre_mtime + 200 ),
+	$salvocofre_empty_zip  => array( '', str_repeat( 's', 3 ), $salvocofre_mtime + 100 ),
 );
 
-foreach ( $failsafe_sets as $failsafe_base => $failsafe_set ) {
-	list( $failsafe_zip_contents, $failsafe_sql_contents, $failsafe_set_mtime ) = $failsafe_set;
+foreach ( $salvocofre_sets as $salvocofre_base => $salvocofre_set ) {
+	list( $salvocofre_zip_contents, $salvocofre_sql_contents, $salvocofre_set_mtime ) = $salvocofre_set;
 
-	$failsafe_created = failsafe_test_create_set(
-		$failsafe_directory,
-		$failsafe_base,
-		$failsafe_set_mtime,
-		$failsafe_zip_contents,
-		$failsafe_sql_contents
+	$salvocofre_created = salvocofre_test_create_set(
+		$salvocofre_directory,
+		$salvocofre_base,
+		$salvocofre_set_mtime,
+		$salvocofre_zip_contents,
+		$salvocofre_sql_contents
 	);
 
-	failsafe_assert( ! is_wp_error( $failsafe_created ), 'creates the files for ' . $failsafe_base );
+	salvocofre_assert( ! is_wp_error( $salvocofre_created ), 'creates the files for ' . $salvocofre_base );
 }
 
-$failsafe_backups = failsafe_get_backups();
+$salvocofre_backups = salvocofre_get_backups();
 
-failsafe_assert( is_array( $failsafe_backups ), 'returns an array' );
+salvocofre_assert( is_array( $salvocofre_backups ), 'returns an array' );
 
-foreach ( array_keys( $failsafe_sets ) as $failsafe_base ) {
-	failsafe_assert( isset( $failsafe_backups[ $failsafe_base ] ), 'lists the set ' . $failsafe_base );
+foreach ( array_keys( $salvocofre_sets ) as $salvocofre_base ) {
+	salvocofre_assert( isset( $salvocofre_backups[ $salvocofre_base ] ), 'lists the set ' . $salvocofre_base );
 }
 
-failsafe_assert(
-	$failsafe_newest . '.zip' === $failsafe_backups[ $failsafe_newest ]['zip']['name'],
+salvocofre_assert(
+	$salvocofre_newest . '.zip' === $salvocofre_backups[ $salvocofre_newest ]['zip']['name'],
 	'groups the zip file under its base name'
 );
-failsafe_assert(
-	$failsafe_newest . '.sql' === $failsafe_backups[ $failsafe_newest ]['sql']['name'],
+salvocofre_assert(
+	$salvocofre_newest . '.sql' === $salvocofre_backups[ $salvocofre_newest ]['sql']['name'],
 	'groups the sql file under its base name'
 );
-failsafe_assert( true === $failsafe_backups[ $failsafe_newest ]['complete'], 'marks a set with zip and sql as complete' );
-failsafe_assert( true === $failsafe_backups[ $failsafe_middle ]['complete'], 'marks another complete set as complete' );
-failsafe_assert( false === $failsafe_backups[ $failsafe_incomplete ]['complete'], 'marks a set without sql as incomplete' );
-failsafe_assert( false === $failsafe_backups[ $failsafe_empty_zip ]['complete'], 'marks a set with an empty zip as incomplete' );
+salvocofre_assert( true === $salvocofre_backups[ $salvocofre_newest ]['complete'], 'marks a set with zip and sql as complete' );
+salvocofre_assert( true === $salvocofre_backups[ $salvocofre_middle ]['complete'], 'marks another complete set as complete' );
+salvocofre_assert( false === $salvocofre_backups[ $salvocofre_incomplete ]['complete'], 'marks a set without sql as incomplete' );
+salvocofre_assert( false === $salvocofre_backups[ $salvocofre_empty_zip ]['complete'], 'marks a set with an empty zip as incomplete' );
 
-foreach ( $failsafe_sets as $failsafe_base => $failsafe_set ) {
-	$failsafe_expected_size = strlen( $failsafe_set[0] );
+foreach ( $salvocofre_sets as $salvocofre_base => $salvocofre_set ) {
+	$salvocofre_expected_size = strlen( $salvocofre_set[0] );
 
-	if ( null !== $failsafe_set[1] ) {
-		$failsafe_expected_size += strlen( $failsafe_set[1] );
+	if ( null !== $salvocofre_set[1] ) {
+		$salvocofre_expected_size += strlen( $salvocofre_set[1] );
 	}
 
-	failsafe_assert(
-		$failsafe_expected_size === $failsafe_backups[ $failsafe_base ]['size'],
-		'sums the size of both files for ' . $failsafe_base
+	salvocofre_assert(
+		$salvocofre_expected_size === $salvocofre_backups[ $salvocofre_base ]['size'],
+		'sums the size of both files for ' . $salvocofre_base
 	);
 }
 
-$failsafe_expected_order = array_keys( $failsafe_sets );
-$failsafe_actual_order   = array_values( array_intersect( array_keys( $failsafe_backups ), $failsafe_expected_order ) );
+$salvocofre_expected_order = array_keys( $salvocofre_sets );
+$salvocofre_actual_order   = array_values( array_intersect( array_keys( $salvocofre_backups ), $salvocofre_expected_order ) );
 
-failsafe_assert( $failsafe_expected_order === $failsafe_actual_order, 'lists the sets newest first' );
+salvocofre_assert( $salvocofre_expected_order === $salvocofre_actual_order, 'lists the sets newest first' );
 
-$failsafe_previous   = null;
-$failsafe_descending = true;
+$salvocofre_previous   = null;
+$salvocofre_descending = true;
 
-foreach ( $failsafe_backups as $failsafe_backup ) {
-	if ( null !== $failsafe_previous && $failsafe_backup['time'] > $failsafe_previous ) {
-		$failsafe_descending = false;
+foreach ( $salvocofre_backups as $salvocofre_backup ) {
+	if ( null !== $salvocofre_previous && $salvocofre_backup['time'] > $salvocofre_previous ) {
+		$salvocofre_descending = false;
 	}
 
-	$failsafe_previous = (int) $failsafe_backup['time'];
+	$salvocofre_previous = (int) $salvocofre_backup['time'];
 }
 
-failsafe_assert( $failsafe_descending, 'keeps every listed set in descending time order' );
+salvocofre_assert( $salvocofre_descending, 'keeps every listed set in descending time order' );
 
-failsafe_test_cleanup_files();
+salvocofre_test_cleanup_files();
 
-foreach ( array_keys( $failsafe_sets ) as $failsafe_base ) {
-	failsafe_assert(
-		! file_exists( $failsafe_directory . '/' . $failsafe_base . '.zip' )
-		&& ! file_exists( $failsafe_directory . '/' . $failsafe_base . '.sql' ),
-		'removes the temporary files of ' . $failsafe_base
+foreach ( array_keys( $salvocofre_sets ) as $salvocofre_base ) {
+	salvocofre_assert(
+		! file_exists( $salvocofre_directory . '/' . $salvocofre_base . '.zip' )
+		&& ! file_exists( $salvocofre_directory . '/' . $salvocofre_base . '.sql' ),
+		'removes the temporary files of ' . $salvocofre_base
 	);
 }
 
 unset(
-	$failsafe_directory,
-	$failsafe_newest,
-	$failsafe_middle,
-	$failsafe_incomplete,
-	$failsafe_empty_zip,
-	$failsafe_mtime,
-	$failsafe_sets,
-	$failsafe_set,
-	$failsafe_base,
-	$failsafe_zip_contents,
-	$failsafe_sql_contents,
-	$failsafe_set_mtime,
-	$failsafe_created,
-	$failsafe_backups,
-	$failsafe_expected_size,
-	$failsafe_expected_order,
-	$failsafe_actual_order,
-	$failsafe_previous,
-	$failsafe_descending,
-	$failsafe_backup
+	$salvocofre_directory,
+	$salvocofre_newest,
+	$salvocofre_middle,
+	$salvocofre_incomplete,
+	$salvocofre_empty_zip,
+	$salvocofre_mtime,
+	$salvocofre_sets,
+	$salvocofre_set,
+	$salvocofre_base,
+	$salvocofre_zip_contents,
+	$salvocofre_sql_contents,
+	$salvocofre_set_mtime,
+	$salvocofre_created,
+	$salvocofre_backups,
+	$salvocofre_expected_size,
+	$salvocofre_expected_order,
+	$salvocofre_actual_order,
+	$salvocofre_previous,
+	$salvocofre_descending,
+	$salvocofre_backup
 );
 
-echo "\nfailsafe_apply_retention()\n";
+echo "\nsalvocofre_apply_retention()\n";
 
-$failsafe_oldest     = 'failsafe-19990201-000001';
-$failsafe_second     = 'failsafe-19990201-000002';
-$failsafe_third      = 'failsafe-19990201-000003';
-$failsafe_newest     = 'failsafe-19990201-000004';
-$failsafe_mtime      = 1000001000;
+$salvocofre_oldest     = 'salvocofre-19990201-000001';
+$salvocofre_second     = 'salvocofre-19990201-000002';
+$salvocofre_third      = 'salvocofre-19990201-000003';
+$salvocofre_newest     = 'salvocofre-19990201-000004';
+$salvocofre_mtime      = 1000001000;
 
-$failsafe_retention_dir = failsafe_test_temp_dir();
+$salvocofre_retention_dir = salvocofre_test_temp_dir();
 
-failsafe_assert( ! is_wp_error( $failsafe_retention_dir ), 'creates a temporary backup directory' );
+salvocofre_assert( ! is_wp_error( $salvocofre_retention_dir ), 'creates a temporary backup directory' );
 
-if ( ! is_wp_error( $failsafe_retention_dir ) ) {
-	$failsafe_retention_filter = static function ( $directory ) use ( $failsafe_retention_dir ) {
-		return $failsafe_retention_dir;
+if ( ! is_wp_error( $salvocofre_retention_dir ) ) {
+	$salvocofre_retention_filter = static function ( $directory ) use ( $salvocofre_retention_dir ) {
+		return $salvocofre_retention_dir;
 	};
 
-	add_filter( 'failsafe_backup_dir', $failsafe_retention_filter );
-	update_option( 'failsafe_retention_count', 2 );
+	add_filter( 'salvocofre_backup_dir', $salvocofre_retention_filter );
+	update_option( 'salvocofre_retention_count', 2 );
 
-	foreach ( array( $failsafe_oldest, $failsafe_second, $failsafe_third, $failsafe_newest ) as $failsafe_index => $failsafe_base ) {
-		$failsafe_created = failsafe_test_create_set(
-			$failsafe_retention_dir,
-			$failsafe_base,
-			$failsafe_mtime + ( 100 * $failsafe_index ),
-			'zip:' . $failsafe_base,
-			'sql:' . $failsafe_base
+	foreach ( array( $salvocofre_oldest, $salvocofre_second, $salvocofre_third, $salvocofre_newest ) as $salvocofre_index => $salvocofre_base ) {
+		$salvocofre_created = salvocofre_test_create_set(
+			$salvocofre_retention_dir,
+			$salvocofre_base,
+			$salvocofre_mtime + ( 100 * $salvocofre_index ),
+			'zip:' . $salvocofre_base,
+			'sql:' . $salvocofre_base
 		);
 
-		failsafe_assert( ! is_wp_error( $failsafe_created ), 'creates the set ' . $failsafe_base );
+		salvocofre_assert( ! is_wp_error( $salvocofre_created ), 'creates the set ' . $salvocofre_base );
 	}
 
-	$failsafe_deleted = failsafe_apply_retention( $failsafe_newest );
+	$salvocofre_deleted = salvocofre_apply_retention( $salvocofre_newest );
 
-	failsafe_assert( is_array( $failsafe_deleted ), 'returns the deleted base names' );
+	salvocofre_assert( is_array( $salvocofre_deleted ), 'returns the deleted base names' );
 
-	$failsafe_expected_deleted = array( $failsafe_oldest, $failsafe_second );
-	$failsafe_actual_deleted   = is_array( $failsafe_deleted ) ? $failsafe_deleted : array();
+	$salvocofre_expected_deleted = array( $salvocofre_oldest, $salvocofre_second );
+	$salvocofre_actual_deleted   = is_array( $salvocofre_deleted ) ? $salvocofre_deleted : array();
 
-	sort( $failsafe_expected_deleted );
-	sort( $failsafe_actual_deleted );
+	sort( $salvocofre_expected_deleted );
+	sort( $salvocofre_actual_deleted );
 
-	failsafe_assert( $failsafe_expected_deleted === $failsafe_actual_deleted, 'deletes the two oldest sets' );
-	failsafe_assert( file_exists( $failsafe_retention_dir . '/' . $failsafe_newest . '.zip' ), 'keeps the keep_base set' );
-	failsafe_assert( ! file_exists( $failsafe_retention_dir . '/' . $failsafe_oldest . '.zip' ), 'removes the oldest zip file' );
-	failsafe_assert( ! file_exists( $failsafe_retention_dir . '/' . $failsafe_second . '.sql' ), 'removes the second oldest sql file' );
+	salvocofre_assert( $salvocofre_expected_deleted === $salvocofre_actual_deleted, 'deletes the two oldest sets' );
+	salvocofre_assert( file_exists( $salvocofre_retention_dir . '/' . $salvocofre_newest . '.zip' ), 'keeps the keep_base set' );
+	salvocofre_assert( ! file_exists( $salvocofre_retention_dir . '/' . $salvocofre_oldest . '.zip' ), 'removes the oldest zip file' );
+	salvocofre_assert( ! file_exists( $salvocofre_retention_dir . '/' . $salvocofre_second . '.sql' ), 'removes the second oldest sql file' );
 
-	remove_filter( 'failsafe_backup_dir', $failsafe_retention_filter );
-	failsafe_test_cleanup_files();
-	failsafe_test_cleanup_dirs();
+	remove_filter( 'salvocofre_backup_dir', $salvocofre_retention_filter );
+	salvocofre_test_cleanup_files();
+	salvocofre_test_cleanup_dirs();
 }
 
-$failsafe_protected_dir = failsafe_test_temp_dir();
+$salvocofre_protected_dir = salvocofre_test_temp_dir();
 
-failsafe_assert( ! is_wp_error( $failsafe_protected_dir ), 'creates a second temporary backup directory' );
+salvocofre_assert( ! is_wp_error( $salvocofre_protected_dir ), 'creates a second temporary backup directory' );
 
-if ( ! is_wp_error( $failsafe_protected_dir ) ) {
-	$failsafe_protected_filter = static function ( $directory ) use ( $failsafe_protected_dir ) {
-		return $failsafe_protected_dir;
+if ( ! is_wp_error( $salvocofre_protected_dir ) ) {
+	$salvocofre_protected_filter = static function ( $directory ) use ( $salvocofre_protected_dir ) {
+		return $salvocofre_protected_dir;
 	};
 
-	add_filter( 'failsafe_backup_dir', $failsafe_protected_filter );
-	update_option( 'failsafe_retention_count', 1 );
+	add_filter( 'salvocofre_backup_dir', $salvocofre_protected_filter );
+	update_option( 'salvocofre_retention_count', 1 );
 
-	foreach ( array( $failsafe_oldest, $failsafe_second, $failsafe_third, $failsafe_newest ) as $failsafe_index => $failsafe_base ) {
-		$failsafe_created = failsafe_test_create_set(
-			$failsafe_protected_dir,
-			$failsafe_base,
-			$failsafe_mtime + ( 100 * $failsafe_index ),
-			'zip:' . $failsafe_base,
-			'sql:' . $failsafe_base
+	foreach ( array( $salvocofre_oldest, $salvocofre_second, $salvocofre_third, $salvocofre_newest ) as $salvocofre_index => $salvocofre_base ) {
+		$salvocofre_created = salvocofre_test_create_set(
+			$salvocofre_protected_dir,
+			$salvocofre_base,
+			$salvocofre_mtime + ( 100 * $salvocofre_index ),
+			'zip:' . $salvocofre_base,
+			'sql:' . $salvocofre_base
 		);
 
-		failsafe_assert( ! is_wp_error( $failsafe_created ), 'creates the protected set ' . $failsafe_base );
+		salvocofre_assert( ! is_wp_error( $salvocofre_created ), 'creates the protected set ' . $salvocofre_base );
 	}
 
-	$failsafe_deleted = failsafe_apply_retention( $failsafe_oldest );
+	$salvocofre_deleted = salvocofre_apply_retention( $salvocofre_oldest );
 
-	$failsafe_expected_deleted = array( $failsafe_second, $failsafe_third );
-	$failsafe_actual_deleted   = is_array( $failsafe_deleted ) ? $failsafe_deleted : array();
+	$salvocofre_expected_deleted = array( $salvocofre_second, $salvocofre_third );
+	$salvocofre_actual_deleted   = is_array( $salvocofre_deleted ) ? $salvocofre_deleted : array();
 
-	sort( $failsafe_expected_deleted );
-	sort( $failsafe_actual_deleted );
+	sort( $salvocofre_expected_deleted );
+	sort( $salvocofre_actual_deleted );
 
-	failsafe_assert( $failsafe_expected_deleted === $failsafe_actual_deleted, 'deletes the sets beyond the limit' );
-	failsafe_assert( file_exists( $failsafe_protected_dir . '/' . $failsafe_oldest . '.sql' ), 'never deletes the keep_base set' );
+	salvocofre_assert( $salvocofre_expected_deleted === $salvocofre_actual_deleted, 'deletes the sets beyond the limit' );
+	salvocofre_assert( file_exists( $salvocofre_protected_dir . '/' . $salvocofre_oldest . '.sql' ), 'never deletes the keep_base set' );
 
-	remove_filter( 'failsafe_backup_dir', $failsafe_protected_filter );
-	failsafe_test_cleanup_files();
-	failsafe_test_cleanup_dirs();
+	remove_filter( 'salvocofre_backup_dir', $salvocofre_protected_filter );
+	salvocofre_test_cleanup_files();
+	salvocofre_test_cleanup_dirs();
 }
 
-failsafe_test_restore_retention();
+salvocofre_test_restore_retention();
 
-$failsafe_restored = get_option( 'failsafe_retention_count', '__failsafe_missing__' );
+$salvocofre_restored = get_option( 'salvocofre_retention_count', '__salvocofre_missing__' );
 
-failsafe_assert(
-	$GLOBALS['failsafe_storage_test_retention']['value'] === $failsafe_restored,
+salvocofre_assert(
+	$GLOBALS['salvocofre_storage_test_retention']['value'] === $salvocofre_restored,
 	'restores the original retention option'
 );
 
 unset(
-	$failsafe_oldest,
-	$failsafe_second,
-	$failsafe_third,
-	$failsafe_newest,
-	$failsafe_mtime,
-	$failsafe_retention_dir,
-	$failsafe_retention_filter,
-	$failsafe_protected_dir,
-	$failsafe_protected_filter,
-	$failsafe_index,
-	$failsafe_base,
-	$failsafe_created,
-	$failsafe_deleted,
-	$failsafe_expected_deleted,
-	$failsafe_actual_deleted,
-	$failsafe_restored
+	$salvocofre_oldest,
+	$salvocofre_second,
+	$salvocofre_third,
+	$salvocofre_newest,
+	$salvocofre_mtime,
+	$salvocofre_retention_dir,
+	$salvocofre_retention_filter,
+	$salvocofre_protected_dir,
+	$salvocofre_protected_filter,
+	$salvocofre_index,
+	$salvocofre_base,
+	$salvocofre_created,
+	$salvocofre_deleted,
+	$salvocofre_expected_deleted,
+	$salvocofre_actual_deleted,
+	$salvocofre_restored
 );
 
-echo "\nfailsafe_write_file_atomic()\n";
+echo "\nsalvocofre_write_file_atomic()\n";
 
-$failsafe_directory = rtrim( failsafe_backup_dir(), '/\\' );
-$failsafe_path      = $failsafe_directory . '/failsafe-write-atomic-' . getmypid() . '.tmp';
-$failsafe_contents  = "failsafe atomic write\n";
-$failsafe_bytes     = failsafe_write_file_atomic( $failsafe_path, $failsafe_contents );
+$salvocofre_directory = rtrim( salvocofre_backup_dir(), '/\\' );
+$salvocofre_path      = $salvocofre_directory . '/salvocofre-write-atomic-' . getmypid() . '.tmp';
+$salvocofre_contents  = "salvocofre atomic write\n";
+$salvocofre_bytes     = salvocofre_write_file_atomic( $salvocofre_path, $salvocofre_contents );
 
-failsafe_assert( ! is_wp_error( $failsafe_bytes ), 'returns no WP_Error' );
-failsafe_assert( is_int( $failsafe_bytes ) && strlen( $failsafe_contents ) === $failsafe_bytes, 'returns the number of bytes written' );
-failsafe_assert( file_exists( $failsafe_path ), 'writes the destination file' );
-failsafe_assert( $failsafe_contents === file_get_contents( $failsafe_path ), 'writes the exact contents' );
-failsafe_assert( ! file_exists( $failsafe_path . '.part' ), 'leaves no .part file behind' );
+salvocofre_assert( ! is_wp_error( $salvocofre_bytes ), 'returns no WP_Error' );
+salvocofre_assert( is_int( $salvocofre_bytes ) && strlen( $salvocofre_contents ) === $salvocofre_bytes, 'returns the number of bytes written' );
+salvocofre_assert( file_exists( $salvocofre_path ), 'writes the destination file' );
+salvocofre_assert( $salvocofre_contents === file_get_contents( $salvocofre_path ), 'writes the exact contents' );
+salvocofre_assert( ! file_exists( $salvocofre_path . '.part' ), 'leaves no .part file behind' );
 
-$GLOBALS['failsafe_storage_test_files'][] = $failsafe_path;
+$GLOBALS['salvocofre_storage_test_files'][] = $salvocofre_path;
 
-failsafe_test_cleanup_files();
+salvocofre_test_cleanup_files();
 
-failsafe_assert( ! file_exists( $failsafe_path ), 'removes the temporary file' );
+salvocofre_assert( ! file_exists( $salvocofre_path ), 'removes the temporary file' );
 
-unset( $failsafe_directory, $failsafe_path, $failsafe_contents, $failsafe_bytes );
+unset( $salvocofre_directory, $salvocofre_path, $salvocofre_contents, $salvocofre_bytes );
 
-failsafe_report();
+salvocofre_report();

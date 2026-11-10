@@ -1,12 +1,12 @@
 <?php
 /**
- * Minimal assertion helpers for the Failsafe test scripts.
+ * Minimal assertion helpers for the Salvocofre test scripts.
  *
- * @package Failsafe
+ * @package Salvocofre
  */
 
-$GLOBALS['failsafe_failures'] = 0;
-$GLOBALS['failsafe_checks']   = 0;
+$GLOBALS['salvocofre_failures'] = 0;
+$GLOBALS['salvocofre_checks']   = 0;
 
 /**
  * Records a boolean assertion.
@@ -15,15 +15,15 @@ $GLOBALS['failsafe_checks']   = 0;
  * @param string $message   Description shown on failure.
  * @return void
  */
-function failsafe_assert( $condition, $message ) {
-	$GLOBALS['failsafe_checks']++;
+function salvocofre_assert( $condition, $message ) {
+	$GLOBALS['salvocofre_checks']++;
 
 	if ( $condition ) {
 		echo "  ok   {$message}\n";
 		return;
 	}
 
-	$GLOBALS['failsafe_failures']++;
+	$GLOBALS['salvocofre_failures']++;
 	echo "  FAIL {$message}\n";
 }
 
@@ -32,9 +32,9 @@ function failsafe_assert( $condition, $message ) {
  *
  * @return void
  */
-function failsafe_report() {
-	$checks   = $GLOBALS['failsafe_checks'];
-	$failures = $GLOBALS['failsafe_failures'];
+function salvocofre_report() {
+	$checks   = $GLOBALS['salvocofre_checks'];
+	$failures = $GLOBALS['salvocofre_failures'];
 
 	printf( "\n%d checks, %d failures\n", $checks, $failures );
 	exit( $failures > 0 ? 1 : 0 );

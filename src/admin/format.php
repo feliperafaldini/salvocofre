@@ -2,7 +2,7 @@
 /**
  * Presentation helpers for the backups screen.
  *
- * @package Failsafe
+ * @package Salvocofre
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @param int $timestamp Unix timestamp.
  * @return string
  */
-function failsafe_format_time( $timestamp ) {
+function salvocofre_format_time( $timestamp ) {
 	$format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
 
 	return (string) wp_date( $format, (int) $timestamp );
@@ -29,6 +29,6 @@ function failsafe_format_time( $timestamp ) {
  * @param int $bytes Number of bytes.
  * @return string
  */
-function failsafe_format_size( $bytes ) {
+function salvocofre_format_size( $bytes ) {
 	return (string) size_format( (int) $bytes, 1 );
 }

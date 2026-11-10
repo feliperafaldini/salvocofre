@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="772" height="250" viewBox="0 0 772 250">
-  <!-- Failsafe Backup — banner 772x250 (mesmo SVG renderizado em 2x para 1544x500) -->
+  <!-- Salvocofre Backup — banner 772x250 (mesmo SVG renderizado em 2x para 1544x500) -->
   <rect width="772" height="250" fill="#111416"/>
 
   <g transform="translate(41 -4)">
@@ -20,7 +20,7 @@
 
   <!-- Nome -->
   <text x="272" y="122" font-family="JetBrainsMono Nerd Font, monospace" font-size="50"
-        font-weight="700" letter-spacing="5" fill="#e2e2e6">FAILSAFE</text>
+        font-weight="700" letter-spacing="5" fill="#e2e2e6">SALVOCOFRE</text>
   <text x="274" y="162" font-family="JetBrainsMono Nerd Font, monospace" font-size="21"
         font-weight="500" letter-spacing="13" fill="#9fcbf7">BACKUP</text>
 

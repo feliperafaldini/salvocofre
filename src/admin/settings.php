@@ -2,44 +2,44 @@
 /**
  * Settings page: automatic backups, frequency and retention.
  *
- * @package Failsafe
+ * @package Salvocofre
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! defined( 'FAILSAFE_SETTINGS_GROUP' ) ) {
-	define( 'FAILSAFE_SETTINGS_GROUP', 'failsafe_settings' );
+if ( ! defined( 'SALVOCOFRE_SETTINGS_GROUP' ) ) {
+	define( 'SALVOCOFRE_SETTINGS_GROUP', 'salvocofre_settings' );
 }
 
-if ( ! defined( 'FAILSAFE_SETTINGS_PAGE' ) ) {
-	define( 'FAILSAFE_SETTINGS_PAGE', 'failsafe-settings' );
+if ( ! defined( 'SALVOCOFRE_SETTINGS_PAGE' ) ) {
+	define( 'SALVOCOFRE_SETTINGS_PAGE', 'salvocofre-settings' );
 }
 
-if ( ! defined( 'FAILSAFE_RETENTION_MIN' ) ) {
-	define( 'FAILSAFE_RETENTION_MIN', 0 );
+if ( ! defined( 'SALVOCOFRE_RETENTION_MIN' ) ) {
+	define( 'SALVOCOFRE_RETENTION_MIN', 0 );
 }
 
-if ( ! defined( 'FAILSAFE_RETENTION_MAX' ) ) {
-	define( 'FAILSAFE_RETENTION_MAX', 50 );
+if ( ! defined( 'SALVOCOFRE_RETENTION_MAX' ) ) {
+	define( 'SALVOCOFRE_RETENTION_MAX', 50 );
 }
 
-add_action( 'admin_menu', 'failsafe_register_settings_page' );
-add_action( 'admin_init', 'failsafe_register_settings' );
+add_action( 'admin_menu', 'salvocofre_register_settings_page' );
+add_action( 'admin_init', 'salvocofre_register_settings' );
 
 /**
  * Adds the page under Settings.
  *
  * @return void
  */
-function failsafe_register_settings_page() {
+function salvocofre_register_settings_page() {
 	add_options_page(
-		__( 'Failsafe Backup', 'failsafe-backup' ),
-		__( 'Failsafe Backup', 'failsafe-backup' ),
-		failsafe_backup_capability(),
-		FAILSAFE_SETTINGS_PAGE,
-		'failsafe_render_settings_page'
+		__( 'Salvocofre Backup', 'salvocofre' ),
+		__( 'Salvocofre Backup', 'salvocofre' ),
+		salvocofre_backup_capability(),
+		SALVOCOFRE_SETTINGS_PAGE,
+		'salvocofre_render_settings_page'
 	);
 }
 
@@ -48,76 +48,76 @@ function failsafe_register_settings_page() {
  *
  * @return void
  */
-function failsafe_register_settings() {
+function salvocofre_register_settings() {
 	register_setting(
-		FAILSAFE_SETTINGS_GROUP,
-		'failsafe_schedule_enabled',
+		SALVOCOFRE_SETTINGS_GROUP,
+		'salvocofre_schedule_enabled',
 		array(
 			'type'              => 'boolean',
 			'default'           => true,
-			'sanitize_callback' => 'failsafe_sanitize_schedule_enabled',
+			'sanitize_callback' => 'salvocofre_sanitize_schedule_enabled',
 		)
 	);
 
 	register_setting(
-		FAILSAFE_SETTINGS_GROUP,
-		'failsafe_schedule_frequency',
+		SALVOCOFRE_SETTINGS_GROUP,
+		'salvocofre_schedule_frequency',
 		array(
 			'type'              => 'string',
-			'default'           => FAILSAFE_CRON_FREQUENCY_DEFAULT,
-			'sanitize_callback' => 'failsafe_sanitize_schedule_frequency',
+			'default'           => SALVOCOFRE_CRON_FREQUENCY_DEFAULT,
+			'sanitize_callback' => 'salvocofre_sanitize_schedule_frequency',
 		)
 	);
 
 	register_setting(
-		FAILSAFE_SETTINGS_GROUP,
-		'failsafe_retention_count',
+		SALVOCOFRE_SETTINGS_GROUP,
+		'salvocofre_retention_count',
 		array(
 			'type'              => 'integer',
-			'default'           => FAILSAFE_RETENTION_DEFAULT,
-			'sanitize_callback' => 'failsafe_sanitize_retention_count',
+			'default'           => SALVOCOFRE_RETENTION_DEFAULT,
+			'sanitize_callback' => 'salvocofre_sanitize_retention_count',
 		)
 	);
 
 	add_settings_section(
-		'failsafe_schedule',
-		__( 'Automatic backups', 'failsafe-backup' ),
-		'failsafe_render_schedule_section',
-		FAILSAFE_SETTINGS_PAGE
+		'salvocofre_schedule',
+		__( 'Automatic backups', 'salvocofre' ),
+		'salvocofre_render_schedule_section',
+		SALVOCOFRE_SETTINGS_PAGE
 	);
 
 	add_settings_field(
-		'failsafe_schedule_enabled',
-		__( 'Schedule', 'failsafe-backup' ),
-		'failsafe_render_schedule_enabled_field',
-		FAILSAFE_SETTINGS_PAGE,
-		'failsafe_schedule',
-		array( 'label_for' => 'failsafe_schedule_enabled' )
+		'salvocofre_schedule_enabled',
+		__( 'Schedule', 'salvocofre' ),
+		'salvocofre_render_schedule_enabled_field',
+		SALVOCOFRE_SETTINGS_PAGE,
+		'salvocofre_schedule',
+		array( 'label_for' => 'salvocofre_schedule_enabled' )
 	);
 
 	add_settings_field(
-		'failsafe_schedule_frequency',
-		__( 'Frequency', 'failsafe-backup' ),
-		'failsafe_render_frequency_field',
-		FAILSAFE_SETTINGS_PAGE,
-		'failsafe_schedule',
-		array( 'label_for' => 'failsafe_schedule_frequency' )
+		'salvocofre_schedule_frequency',
+		__( 'Frequency', 'salvocofre' ),
+		'salvocofre_render_frequency_field',
+		SALVOCOFRE_SETTINGS_PAGE,
+		'salvocofre_schedule',
+		array( 'label_for' => 'salvocofre_schedule_frequency' )
 	);
 
 	add_settings_section(
-		'failsafe_storage',
-		__( 'Storage', 'failsafe-backup' ),
-		'failsafe_render_storage_section',
-		FAILSAFE_SETTINGS_PAGE
+		'salvocofre_storage',
+		__( 'Storage', 'salvocofre' ),
+		'salvocofre_render_storage_section',
+		SALVOCOFRE_SETTINGS_PAGE
 	);
 
 	add_settings_field(
-		'failsafe_retention_count',
-		__( 'Backups to keep', 'failsafe-backup' ),
-		'failsafe_render_retention_field',
-		FAILSAFE_SETTINGS_PAGE,
-		'failsafe_storage',
-		array( 'label_for' => 'failsafe_retention_count' )
+		'salvocofre_retention_count',
+		__( 'Backups to keep', 'salvocofre' ),
+		'salvocofre_render_retention_field',
+		SALVOCOFRE_SETTINGS_PAGE,
+		'salvocofre_storage',
+		array( 'label_for' => 'salvocofre_retention_count' )
 	);
 }
 
@@ -127,7 +127,7 @@ function failsafe_register_settings() {
  * @param mixed $value Raw submitted value.
  * @return bool
  */
-function failsafe_sanitize_schedule_enabled( $value ) {
+function salvocofre_sanitize_schedule_enabled( $value ) {
 	$value = is_scalar( $value ) ? (string) $value : '';
 
 	return in_array( $value, array( '1', 'true', 'on', 'yes' ), true );
@@ -139,21 +139,21 @@ function failsafe_sanitize_schedule_enabled( $value ) {
  * @param mixed $value Raw submitted value.
  * @return string
  */
-function failsafe_sanitize_schedule_frequency( $value ) {
+function salvocofre_sanitize_schedule_frequency( $value ) {
 	$frequency = is_string( $value ) ? sanitize_key( $value ) : '';
-	$known     = failsafe_cron_frequencies();
+	$known     = salvocofre_cron_frequencies();
 
 	if ( ! isset( $known[ $frequency ] ) ) {
 		if ( function_exists( 'add_settings_error' ) ) {
 			add_settings_error(
-				'failsafe_schedule_frequency',
-				'failsafe_invalid_frequency',
-				__( 'Unknown backup frequency. The daily schedule was kept.', 'failsafe-backup' ),
+				'salvocofre_schedule_frequency',
+				'salvocofre_invalid_frequency',
+				__( 'Unknown backup frequency. The daily schedule was kept.', 'salvocofre' ),
 				'error'
 			);
 		}
 
-		return FAILSAFE_CRON_FREQUENCY_DEFAULT;
+		return SALVOCOFRE_CRON_FREQUENCY_DEFAULT;
 	}
 
 	return $frequency;
@@ -165,34 +165,34 @@ function failsafe_sanitize_schedule_frequency( $value ) {
  * @param mixed $value Raw submitted value.
  * @return int
  */
-function failsafe_sanitize_retention_count( $value ) {
+function salvocofre_sanitize_retention_count( $value ) {
 	if ( ! is_numeric( $value ) ) {
 		if ( function_exists( 'add_settings_error' ) ) {
-			$message = __( 'The number of backups to keep must be a whole number. The previous value was kept.', 'failsafe-backup' );
+			$message = __( 'The number of backups to keep must be a whole number. The previous value was kept.', 'salvocofre' );
 
 			add_settings_error(
-				'failsafe_retention_count',
-				'failsafe_retention_invalid',
+				'salvocofre_retention_count',
+				'salvocofre_retention_invalid',
 				$message,
 				'error'
 			);
 		}
 
-		return failsafe_get_retention_count();
+		return salvocofre_get_retention_count();
 	}
 
 	$count = (int) $value;
 
-	if ( $count < FAILSAFE_RETENTION_MIN || $count > FAILSAFE_RETENTION_MAX ) {
-		$clamped = min( FAILSAFE_RETENTION_MAX, max( FAILSAFE_RETENTION_MIN, $count ) );
+	if ( $count < SALVOCOFRE_RETENTION_MIN || $count > SALVOCOFRE_RETENTION_MAX ) {
+		$clamped = min( SALVOCOFRE_RETENTION_MAX, max( SALVOCOFRE_RETENTION_MIN, $count ) );
 
 		if ( function_exists( 'add_settings_error' ) ) {
 			add_settings_error(
-				'failsafe_retention_count',
-				'failsafe_retention_range',
+				'salvocofre_retention_count',
+				'salvocofre_retention_range',
 				sprintf(
 					/* translators: %d: number of backups that will be kept. */
-					__( 'The number of backups to keep must be between 0 and 50. Using %d.', 'failsafe-backup' ),
+					__( 'The number of backups to keep must be between 0 and 50. Using %d.', 'salvocofre' ),
 					$clamped
 				),
 				'warning'
@@ -210,18 +210,18 @@ function failsafe_sanitize_retention_count( $value ) {
  *
  * @return void
  */
-function failsafe_render_settings_page() {
-	if ( ! current_user_can( failsafe_backup_capability() ) ) {
-		wp_die( esc_html__( 'You are not allowed to manage backup settings.', 'failsafe-backup' ) );
+function salvocofre_render_settings_page() {
+	if ( ! current_user_can( salvocofre_backup_capability() ) ) {
+		wp_die( esc_html__( 'You are not allowed to manage backup settings.', 'salvocofre' ) );
 	}
 	?>
 	<div class="wrap">
-		<h1><?php esc_html_e( 'Failsafe Backup', 'failsafe-backup' ); ?></h1>
+		<h1><?php esc_html_e( 'Salvocofre Backup', 'salvocofre' ); ?></h1>
 		<?php settings_errors(); ?>
-		<?php failsafe_render_cron_status(); ?>
+		<?php salvocofre_render_cron_status(); ?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'options.php' ) ); ?>">
-			<?php settings_fields( FAILSAFE_SETTINGS_GROUP ); ?>
-			<?php do_settings_sections( FAILSAFE_SETTINGS_PAGE ); ?>
+			<?php settings_fields( SALVOCOFRE_SETTINGS_GROUP ); ?>
+			<?php do_settings_sections( SALVOCOFRE_SETTINGS_PAGE ); ?>
 			<?php submit_button(); ?>
 		</form>
 	</div>
@@ -233,14 +233,14 @@ function failsafe_render_settings_page() {
  *
  * @return void
  */
-function failsafe_render_schedule_section() {
+function salvocofre_render_schedule_section() {
 	$cron_note = __(
 		'Scheduled backups rely on WP-Cron, which only runs when the site receives a visit.',
-		'failsafe-backup'
+		'salvocofre'
 	);
 	$late_note = __(
 		'A quiet site can run a backup late; the status below shows when the next run is due.',
-		'failsafe-backup'
+		'salvocofre'
 	);
 
 	printf( '<p>%s %s</p>', esc_html( $cron_note ), esc_html( $late_note ) );
@@ -251,18 +251,18 @@ function failsafe_render_schedule_section() {
  *
  * @return void
  */
-function failsafe_render_schedule_enabled_field() {
+function salvocofre_render_schedule_enabled_field() {
 	?>
-	<input type="hidden" name="failsafe_schedule_enabled" value="0" />
+	<input type="hidden" name="salvocofre_schedule_enabled" value="0" />
 	<input
 		type="checkbox"
-		id="failsafe_schedule_enabled"
-		name="failsafe_schedule_enabled"
+		id="salvocofre_schedule_enabled"
+		name="salvocofre_schedule_enabled"
 		value="1"
-		<?php checked( failsafe_cron_enabled() ); ?>
+		<?php checked( salvocofre_cron_enabled() ); ?>
 	/>
 	<p class="description">
-		<?php esc_html_e( 'Run a backup automatically. Turning this off removes the scheduled event.', 'failsafe-backup' ); ?>
+		<?php esc_html_e( 'Run a backup automatically. Turning this off removes the scheduled event.', 'salvocofre' ); ?>
 	</p>
 	<?php
 }
@@ -272,15 +272,15 @@ function failsafe_render_schedule_enabled_field() {
  *
  * @return void
  */
-function failsafe_render_frequency_field() {
-	$current     = failsafe_cron_frequency();
-	$frequencies = failsafe_cron_frequencies();
+function salvocofre_render_frequency_field() {
+	$current     = salvocofre_cron_frequency();
+	$frequencies = salvocofre_cron_frequencies();
 	$description = __(
 		'How often automatic backups run. Changing it never adds a second event.',
-		'failsafe-backup'
+		'salvocofre'
 	);
 	?>
-	<select id="failsafe_schedule_frequency" name="failsafe_schedule_frequency">
+	<select id="salvocofre_schedule_frequency" name="salvocofre_schedule_frequency">
 		<?php foreach ( $frequencies as $slug => $label ) : ?>
 			<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $current, $slug ); ?>>
 				<?php echo esc_html( $label ); ?>
@@ -296,12 +296,12 @@ function failsafe_render_frequency_field() {
  *
  * @return void
  */
-function failsafe_render_storage_section() {
+function salvocofre_render_storage_section() {
 	$description = __(
 		'Backups are stored in the site content directory and are not reachable from the web.',
-		'failsafe-backup'
+		'salvocofre'
 	);
-	$retention   = __( 'The retention limit below is applied after every automatic backup.', 'failsafe-backup' );
+	$retention   = __( 'The retention limit below is applied after every automatic backup.', 'salvocofre' );
 
 	printf( '<p>%s %s</p>', esc_html( $description ), esc_html( $retention ) );
 }
@@ -311,20 +311,20 @@ function failsafe_render_storage_section() {
  *
  * @return void
  */
-function failsafe_render_retention_field() {
+function salvocofre_render_retention_field() {
 	?>
 	<input
 		type="number"
-		id="failsafe_retention_count"
-		name="failsafe_retention_count"
-		value="<?php echo esc_attr( (string) failsafe_get_retention_count() ); ?>"
-		min="<?php echo esc_attr( (string) FAILSAFE_RETENTION_MIN ); ?>"
-		max="<?php echo esc_attr( (string) FAILSAFE_RETENTION_MAX ); ?>"
+		id="salvocofre_retention_count"
+		name="salvocofre_retention_count"
+		value="<?php echo esc_attr( (string) salvocofre_get_retention_count() ); ?>"
+		min="<?php echo esc_attr( (string) SALVOCOFRE_RETENTION_MIN ); ?>"
+		max="<?php echo esc_attr( (string) SALVOCOFRE_RETENTION_MAX ); ?>"
 		step="1"
 		class="small-text"
 	/>
 	<p class="description">
-		<?php esc_html_e( 'How many backup sets to keep. Use 0 to keep every backup.', 'failsafe-backup' ); ?>
+		<?php esc_html_e( 'How many backup sets to keep. Use 0 to keep every backup.', 'salvocofre' ); ?>
 	</p>
 	<?php
 }
@@ -334,53 +334,53 @@ function failsafe_render_retention_field() {
  *
  * @return void
  */
-function failsafe_render_cron_status() {
-	$status = failsafe_cron_status();
+function salvocofre_render_cron_status() {
+	$status = salvocofre_cron_status();
 
 	if ( $status['overdue'] ) {
 		$message = sprintf(
 			/* translators: %s: date and time the backup was due. */
-			__( 'The scheduled backup is overdue. It was due on %s.', 'failsafe-backup' ),
-			failsafe_format_timestamp( $status['next_run'] )
+			__( 'The scheduled backup is overdue. It was due on %s.', 'salvocofre' ),
+			salvocofre_format_timestamp( $status['next_run'] )
 		);
-		$message .= ' ' . __( 'WP-Cron only runs with traffic, so a quiet site can be late.', 'failsafe-backup' );
+		$message .= ' ' . __( 'WP-Cron only runs with traffic, so a quiet site can be late.', 'salvocofre' );
 
 		printf( '<div class="notice notice-error inline"><p>%s</p></div>', esc_html( $message ) );
 	} elseif ( $status['not_scheduled'] ) {
-		$message  = __( 'Automatic backups are enabled, but no event is scheduled.', 'failsafe-backup' );
-		$message .= ' ' . __( 'Save the settings to schedule it again.', 'failsafe-backup' );
+		$message  = __( 'Automatic backups are enabled, but no event is scheduled.', 'salvocofre' );
+		$message .= ' ' . __( 'Save the settings to schedule it again.', 'salvocofre' );
 
 		printf( '<div class="notice notice-warning inline"><p>%s</p></div>', esc_html( $message ) );
 	}
 
 	if ( $status['cron_disabled'] ) {
-		$message  = __( 'DISABLE_WP_CRON is set, so WordPress does not start scheduled tasks.', 'failsafe-backup' );
-		$message .= ' ' . __( 'Run wp-cron.php from a system cron job to keep backups on time.', 'failsafe-backup' );
+		$message  = __( 'DISABLE_WP_CRON is set, so WordPress does not start scheduled tasks.', 'salvocofre' );
+		$message .= ' ' . __( 'Run wp-cron.php from a system cron job to keep backups on time.', 'salvocofre' );
 
 		printf( '<div class="notice notice-warning inline"><p>%s</p></div>', esc_html( $message ) );
 	}
 
-	$next_run = __( 'Not scheduled', 'failsafe-backup' );
+	$next_run = __( 'Not scheduled', 'salvocofre' );
 
 	if ( $status['next_run'] > 0 ) {
-		$next_run = failsafe_describe_next_run( $status['next_run'] );
+		$next_run = salvocofre_describe_next_run( $status['next_run'] );
 	}
 
 	$rows = array(
 		array(
-			__( 'Automatic backups', 'failsafe-backup' ),
-			$status['enabled'] ? __( 'Enabled', 'failsafe-backup' ) : __( 'Disabled', 'failsafe-backup' ),
+			__( 'Automatic backups', 'salvocofre' ),
+			$status['enabled'] ? __( 'Enabled', 'salvocofre' ) : __( 'Disabled', 'salvocofre' ),
 		),
 		array(
-			__( 'Last run', 'failsafe-backup' ),
-			failsafe_describe_last_run( $status['last_run'] ),
+			__( 'Last run', 'salvocofre' ),
+			salvocofre_describe_last_run( $status['last_run'] ),
 		),
 		array(
-			__( 'Last result', 'failsafe-backup' ),
-			failsafe_describe_last_result( $status['last_result'] ),
+			__( 'Last result', 'salvocofre' ),
+			salvocofre_describe_last_result( $status['last_result'] ),
 		),
 		array(
-			__( 'Next run', 'failsafe-backup' ),
+			__( 'Next run', 'salvocofre' ),
 			$next_run,
 		),
 	);
@@ -404,7 +404,7 @@ function failsafe_render_cron_status() {
  * @param int $timestamp Unix timestamp.
  * @return string
  */
-function failsafe_format_timestamp( $timestamp ) {
+function salvocofre_format_timestamp( $timestamp ) {
 	$format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
 
 	return (string) wp_date( $format, (int) $timestamp );
@@ -416,15 +416,15 @@ function failsafe_format_timestamp( $timestamp ) {
  * @param int $timestamp Unix timestamp, 0 when it never ran.
  * @return string
  */
-function failsafe_describe_last_run( $timestamp ) {
+function salvocofre_describe_last_run( $timestamp ) {
 	if ( $timestamp <= 0 ) {
-		return __( 'Never', 'failsafe-backup' );
+		return __( 'Never', 'salvocofre' );
 	}
 
 	return sprintf(
 		/* translators: 1: date and time, 2: human readable age such as "5 mins". */
-		__( '%1$s (%2$s ago)', 'failsafe-backup' ),
-		failsafe_format_timestamp( $timestamp ),
+		__( '%1$s (%2$s ago)', 'salvocofre' ),
+		salvocofre_format_timestamp( $timestamp ),
 		human_time_diff( $timestamp )
 	);
 }
@@ -435,19 +435,19 @@ function failsafe_describe_last_run( $timestamp ) {
  * @param int $timestamp Unix timestamp.
  * @return string
  */
-function failsafe_describe_next_run( $timestamp ) {
+function salvocofre_describe_next_run( $timestamp ) {
 	if ( $timestamp < time() ) {
 		return sprintf(
 			/* translators: %s: date and time. */
-			__( '%s (due now)', 'failsafe-backup' ),
-			failsafe_format_timestamp( $timestamp )
+			__( '%s (due now)', 'salvocofre' ),
+			salvocofre_format_timestamp( $timestamp )
 		);
 	}
 
 	return sprintf(
 		/* translators: 1: date and time, 2: human readable wait such as "5 mins". */
-		__( '%1$s (in %2$s)', 'failsafe-backup' ),
-		failsafe_format_timestamp( $timestamp ),
+		__( '%1$s (in %2$s)', 'salvocofre' ),
+		salvocofre_format_timestamp( $timestamp ),
 		human_time_diff( $timestamp )
 	);
 }
@@ -455,12 +455,12 @@ function failsafe_describe_next_run( $timestamp ) {
 /**
  * Describes the stored outcome of the last scheduled run.
  *
- * @param array $result Normalised failsafe_cron_last_result() value.
+ * @param array $result Normalised salvocofre_cron_last_result() value.
  * @return string
  */
-function failsafe_describe_last_result( $result ) {
+function salvocofre_describe_last_result( $result ) {
 	if ( 'ok' === $result['status'] ) {
-		$text = __( 'Completed successfully.', 'failsafe-backup' );
+		$text = __( 'Completed successfully.', 'salvocofre' );
 
 		if ( $result['deleted'] > 0 ) {
 			$text .= ' ' . sprintf(
@@ -469,7 +469,7 @@ function failsafe_describe_last_result( $result ) {
 					'%d older backup was removed by retention.',
 					'%d older backups were removed by retention.',
 					$result['deleted'],
-					'failsafe-backup'
+					'salvocofre'
 				),
 				$result['deleted']
 			);
@@ -479,12 +479,12 @@ function failsafe_describe_last_result( $result ) {
 	}
 
 	if ( 'error' === $result['status'] ) {
-		$text = __( 'Failed.', 'failsafe-backup' );
+		$text = __( 'Failed.', 'salvocofre' );
 
 		if ( '' !== $result['code'] ) {
 			$text .= ' ' . sprintf(
 				/* translators: %s: error code. */
-				__( 'Error code: %s.', 'failsafe-backup' ),
+				__( 'Error code: %s.', 'salvocofre' ),
 				$result['code']
 			);
 		}
@@ -496,5 +496,5 @@ function failsafe_describe_last_result( $result ) {
 		return $text;
 	}
 
-	return __( 'No automatic backup has run yet.', 'failsafe-backup' );
+	return __( 'No automatic backup has run yet.', 'salvocofre' );
 }

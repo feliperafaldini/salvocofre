@@ -7,50 +7,50 @@
  * the cost before any file is written and fail with a message the site owner
  * can act on.
  *
- * @package Failsafe
+ * @package Salvocofre
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! defined( 'FAILSAFE_MIN_MEMORY_BYTES' ) ) {
-	define( 'FAILSAFE_MIN_MEMORY_BYTES', 64 * MB_IN_BYTES );
+if ( ! defined( 'SALVOCOFRE_MIN_MEMORY_BYTES' ) ) {
+	define( 'SALVOCOFRE_MIN_MEMORY_BYTES', 64 * MB_IN_BYTES );
 }
 
-if ( ! defined( 'FAILSAFE_SITE_SIZE_CACHE_TTL' ) ) {
-	define( 'FAILSAFE_SITE_SIZE_CACHE_TTL', HOUR_IN_SECONDS );
+if ( ! defined( 'SALVOCOFRE_SITE_SIZE_CACHE_TTL' ) ) {
+	define( 'SALVOCOFRE_SITE_SIZE_CACHE_TTL', HOUR_IN_SECONDS );
 }
 
-if ( ! defined( 'FAILSAFE_LIMIT_SAFETY_FACTOR' ) ) {
+if ( ! defined( 'SALVOCOFRE_LIMIT_SAFETY_FACTOR' ) ) {
 	// Memory assumed per byte of database: the dump text plus the row copies.
-	define( 'FAILSAFE_LIMIT_SAFETY_FACTOR', 3 );
+	define( 'SALVOCOFRE_LIMIT_SAFETY_FACTOR', 3 );
 }
 
-if ( ! defined( 'FAILSAFE_DB_SIZE_CACHE_TTL' ) ) {
+if ( ! defined( 'SALVOCOFRE_DB_SIZE_CACHE_TTL' ) ) {
 	// Seconds the table sizes are trusted before information_schema is queried again.
-	define( 'FAILSAFE_DB_SIZE_CACHE_TTL', 600 );
+	define( 'SALVOCOFRE_DB_SIZE_CACHE_TTL', 600 );
 }
 
-if ( ! defined( 'FAILSAFE_DISK_SAFETY_FACTOR' ) ) {
+if ( ! defined( 'SALVOCOFRE_DISK_SAFETY_FACTOR' ) ) {
 	// Disk assumed per byte of database: the SQL dump and the ZIP archive.
-	define( 'FAILSAFE_DISK_SAFETY_FACTOR', 2 );
+	define( 'SALVOCOFRE_DISK_SAFETY_FACTOR', 2 );
 }
 
-if ( ! defined( 'FAILSAFE_DISK_MARGIN_BYTES' ) ) {
+if ( ! defined( 'SALVOCOFRE_DISK_MARGIN_BYTES' ) ) {
 	// Extra room for the archive index and the temporary ".part" file.
-	define( 'FAILSAFE_DISK_MARGIN_BYTES', 16 * 1024 * 1024 );
+	define( 'SALVOCOFRE_DISK_MARGIN_BYTES', 16 * 1024 * 1024 );
 }
 
-if ( ! defined( 'FAILSAFE_BACKUP_BASE_SECONDS' ) ) {
+if ( ! defined( 'SALVOCOFRE_BACKUP_BASE_SECONDS' ) ) {
 	// Fixed cost of scanning the site and opening the archive.
-	define( 'FAILSAFE_BACKUP_BASE_SECONDS', 5 );
+	define( 'SALVOCOFRE_BACKUP_BASE_SECONDS', 5 );
 }
 
-if ( ! defined( 'FAILSAFE_DB_BYTES_PER_SECOND' ) ) {
+if ( ! defined( 'SALVOCOFRE_DB_BYTES_PER_SECOND' ) ) {
 	// Measured here: a 150,000-row table plus a 42 MB archive in 8 s, about 10 MB/s
 	// of payload. 8 MB/s keeps a margin without blocking work that fits in the limit.
-	define( 'FAILSAFE_DB_BYTES_PER_SECOND', 8 * 1024 * 1024 );
+	define( 'SALVOCOFRE_DB_BYTES_PER_SECOND', 8 * 1024 * 1024 );
 }
 
 /**
@@ -63,7 +63,7 @@ if ( ! defined( 'FAILSAFE_DB_BYTES_PER_SECOND' ) ) {
  * @param string|int $value Value as returned by ini_get() or a literal size.
  * @return int Bytes, -1 for no limit, 0 for unknown.
  */
-function failsafe_parse_size( $value ) {
+function salvocofre_parse_size( $value ) {
 	if ( is_int( $value ) ) {
 		return ( 0 > $value ) ? -1 : $value;
 	}
@@ -108,10 +108,10 @@ function failsafe_parse_size( $value ) {
  * @param float|null $factor         Ignored; kept for backwards compatibility.
  * @return int Bytes.
  */
-function failsafe_required_memory_bytes( $database_bytes = 0, $factor = null ) {
+function salvocofre_required_memory_bytes( $database_bytes = 0, $factor = null ) {
 	unset( $database_bytes, $factor );
 
-	return (int) apply_filters( 'failsafe_required_memory_bytes', FAILSAFE_MIN_MEMORY_BYTES );
+	return (int) apply_filters( 'salvocofre_required_memory_bytes', SALVOCOFRE_MIN_MEMORY_BYTES );
 }
 
 /**
@@ -123,18 +123,18 @@ function failsafe_required_memory_bytes( $database_bytes = 0, $factor = null ) {
  *
  * @return int Bytes, 0 when it cannot be measured.
  */
-function failsafe_estimate_site_bytes() {
-	$cached = get_transient( 'failsafe_site_size_cache' );
+function salvocofre_estimate_site_bytes() {
+	$cached = get_transient( 'salvocofre_site_size_cache' );
 
 	if ( is_numeric( $cached ) ) {
 		return (int) $cached;
 	}
 
 	$root = rtrim( ABSPATH, '/\\' );
-	$skip = array( failsafe_backup_dir(), $root . '/wp-content/cache', $root . '/wp-content/upgrade' );
+	$skip = array( salvocofre_backup_dir(), $root . '/wp-content/cache', $root . '/wp-content/upgrade' );
 
 	/** This filter is documented in admin/actions.php */
-	$skip = (array) apply_filters( 'failsafe_backup_excluded_paths', $skip, $root );
+	$skip = (array) apply_filters( 'salvocofre_backup_excluded_paths', $skip, $root );
 	$size = 0;
 
 	try {
@@ -146,19 +146,19 @@ function failsafe_estimate_site_bytes() {
 		foreach ( $iterator as $file ) {
 			$pathname = $file->getPathname();
 
-			if ( failsafe_path_is_excluded( $pathname, $skip ) ) {
+			if ( salvocofre_path_is_excluded( $pathname, $skip ) ) {
 				continue;
 			}
 
 			$size += (int) $file->getSize();
 		}
 	} catch ( Exception $exception ) {
-		failsafe_log( 'site size: ' . $exception->getMessage() );
+		salvocofre_log( 'site size: ' . $exception->getMessage() );
 
 		return 0;
 	}
 
-	set_transient( 'failsafe_site_size_cache', $size, FAILSAFE_SITE_SIZE_CACHE_TTL );
+	set_transient( 'salvocofre_site_size_cache', $size, SALVOCOFRE_SITE_SIZE_CACHE_TTL );
 
 	return $size;
 }
@@ -168,8 +168,8 @@ function failsafe_estimate_site_bytes() {
  *
  * @return void
  */
-function failsafe_clear_site_size_cache() {
-	delete_transient( 'failsafe_site_size_cache' );
+function salvocofre_clear_site_size_cache() {
+	delete_transient( 'salvocofre_site_size_cache' );
 }
 
 /**
@@ -181,24 +181,24 @@ function failsafe_clear_site_size_cache() {
  * @param int $database_bytes Estimated database size in bytes.
  * @return int Bytes.
  */
-function failsafe_required_disk_bytes( $database_bytes ) {
+function salvocofre_required_disk_bytes( $database_bytes ) {
 	$database_bytes = max( 0, (int) $database_bytes );
 
-	return (int) ( $database_bytes * FAILSAFE_DISK_SAFETY_FACTOR ) + FAILSAFE_DISK_MARGIN_BYTES;
+	return (int) ( $database_bytes * SALVOCOFRE_DISK_SAFETY_FACTOR ) + SALVOCOFRE_DISK_MARGIN_BYTES;
 }
 
 /**
  * Estimated duration of a backup run for a database of the given size.
  *
  * @param int $database_bytes Estimated database size in bytes.
- * @return int Seconds, never less than FAILSAFE_BACKUP_BASE_SECONDS.
+ * @return int Seconds, never less than SALVOCOFRE_BACKUP_BASE_SECONDS.
  */
-function failsafe_estimate_backup_seconds( $database_bytes ) {
+function salvocofre_estimate_backup_seconds( $database_bytes ) {
 	$database_bytes = max( 0, (int) $database_bytes );
-	$throughput     = ( FAILSAFE_DB_BYTES_PER_SECOND > 0 ) ? FAILSAFE_DB_BYTES_PER_SECOND : 1;
-	$seconds        = FAILSAFE_BACKUP_BASE_SECONDS + (int) ceil( $database_bytes / $throughput );
+	$throughput     = ( SALVOCOFRE_DB_BYTES_PER_SECOND > 0 ) ? SALVOCOFRE_DB_BYTES_PER_SECOND : 1;
+	$seconds        = SALVOCOFRE_BACKUP_BASE_SECONDS + (int) ceil( $database_bytes / $throughput );
 
-	return max( FAILSAFE_BACKUP_BASE_SECONDS, $seconds );
+	return max( SALVOCOFRE_BACKUP_BASE_SECONDS, $seconds );
 }
 
 /**
@@ -207,7 +207,7 @@ function failsafe_estimate_backup_seconds( $database_bytes ) {
  * @param string $directory Absolute path.
  * @return int Bytes, or -1 when the value cannot be read.
  */
-function failsafe_available_disk_bytes( $directory ) {
+function salvocofre_available_disk_bytes( $directory ) {
 	if ( ! is_string( $directory ) || '' === $directory || ! is_dir( $directory ) ) {
 		return -1;
 	}
@@ -230,27 +230,27 @@ function failsafe_available_disk_bytes( $directory ) {
  * Estimated size of the current database.
  *
  * Sums DATA_LENGTH and INDEX_LENGTH of every table in the current schema and
- * caches the result in an option for FAILSAFE_DB_SIZE_CACHE_TTL seconds.
+ * caches the result in an option for SALVOCOFRE_DB_SIZE_CACHE_TTL seconds.
  *
  * @return int|WP_Error Bytes on success.
  */
-function failsafe_estimate_database_size() {
+function salvocofre_estimate_database_size() {
 	global $wpdb;
 
-	$cached = get_option( 'failsafe_db_size_cache' );
+	$cached = get_option( 'salvocofre_db_size_cache' );
 
 	if ( is_array( $cached ) && isset( $cached['bytes'], $cached['time'] ) ) {
 		$age = time() - (int) $cached['time'];
 
-		if ( FAILSAFE_DB_SIZE_CACHE_TTL > $age ) {
+		if ( SALVOCOFRE_DB_SIZE_CACHE_TTL > $age ) {
 			return max( 0, (int) $cached['bytes'] );
 		}
 	}
 
 	if ( ! is_object( $wpdb ) ) {
 		return new WP_Error(
-			'failsafe_no_database',
-			__( 'The database connection is not available.', 'failsafe-backup' )
+			'salvocofre_no_database',
+			__( 'The database connection is not available.', 'salvocofre' )
 		);
 	}
 
@@ -266,13 +266,13 @@ function failsafe_estimate_database_size() {
 	);
 
 	if ( $wpdb->last_error ) {
-		return new WP_Error( 'failsafe_db_size_query_failed', $wpdb->last_error );
+		return new WP_Error( 'salvocofre_db_size_query_failed', $wpdb->last_error );
 	}
 
 	$bytes = max( 0, (int) $bytes );
 
 	update_option(
-		'failsafe_db_size_cache',
+		'salvocofre_db_size_cache',
 		array(
 			'bytes' => $bytes,
 			'time'  => time(),
@@ -288,8 +288,8 @@ function failsafe_estimate_database_size() {
  *
  * @return void
  */
-function failsafe_clear_database_size_cache() {
-	delete_option( 'failsafe_db_size_cache' );
+function salvocofre_clear_database_size_cache() {
+	delete_option( 'salvocofre_db_size_cache' );
 }
 
 /**
@@ -297,8 +297,8 @@ function failsafe_clear_database_size_cache() {
  *
  * @return true|WP_Error True when every limit has room, WP_Error otherwise.
  */
-function failsafe_check_limits() {
-	$database_bytes = failsafe_estimate_database_size();
+function salvocofre_check_limits() {
+	$database_bytes = salvocofre_estimate_database_size();
 
 	if ( is_wp_error( $database_bytes ) ) {
 		return $database_bytes;
@@ -306,15 +306,15 @@ function failsafe_check_limits() {
 
 	$database_bytes = (int) $database_bytes;
 
-	$memory_limit  = failsafe_parse_size( ini_get( 'memory_limit' ) );
-	$memory_needed = failsafe_required_memory_bytes( $database_bytes );
+	$memory_limit  = salvocofre_parse_size( ini_get( 'memory_limit' ) );
+	$memory_needed = salvocofre_required_memory_bytes( $database_bytes );
 
 	if ( 0 < $memory_limit && $memory_needed > $memory_limit ) {
 		return new WP_Error(
-			'failsafe_limit_memory',
+			'salvocofre_limit_memory',
 			sprintf(
 				/* translators: 1: memory required, 2: PHP memory limit. */
-				__( 'A backup needs about %1$s of memory to stream the dump and build the archive, but PHP only allows %2$s. Raise the memory_limit setting.', 'failsafe-backup' ),
+				__( 'A backup needs about %1$s of memory to stream the dump and build the archive, but PHP only allows %2$s. Raise the memory_limit setting.', 'salvocofre' ),
 				size_format( $memory_needed ),
 				size_format( $memory_limit )
 			)
@@ -322,17 +322,17 @@ function failsafe_check_limits() {
 	}
 
 	// The archive holds the site files too, and on most sites they are the larger half.
-	$payload     = $database_bytes + (int) failsafe_estimate_site_bytes();
-	$directory   = failsafe_backup_dir();
-	$disk_free   = failsafe_available_disk_bytes( $directory );
-	$disk_needed = failsafe_required_disk_bytes( $payload );
+	$payload     = $database_bytes + (int) salvocofre_estimate_site_bytes();
+	$directory   = salvocofre_backup_dir();
+	$disk_free   = salvocofre_available_disk_bytes( $directory );
+	$disk_needed = salvocofre_required_disk_bytes( $payload );
 
 	if ( 0 <= $disk_free && $disk_needed > $disk_free ) {
 		return new WP_Error(
-			'failsafe_limit_disk',
+			'salvocofre_limit_disk',
 			sprintf(
 				/* translators: 1: backup directory, 2: free space required, 3: free space available. */
-				__( 'The backup directory %1$s needs about %2$s of free space, but only %3$s is available. Free up disk space and try again.', 'failsafe-backup' ),
+				__( 'The backup directory %1$s needs about %2$s of free space, but only %3$s is available. Free up disk space and try again.', 'salvocofre' ),
 				$directory,
 				size_format( $disk_needed ),
 				size_format( $disk_free )
@@ -340,15 +340,15 @@ function failsafe_check_limits() {
 		);
 	}
 
-	$time_limit = failsafe_parse_size( ini_get( 'max_execution_time' ) );
-	$estimated  = failsafe_estimate_backup_seconds( $payload );
+	$time_limit = salvocofre_parse_size( ini_get( 'max_execution_time' ) );
+	$estimated  = salvocofre_estimate_backup_seconds( $payload );
 
 	if ( 0 < $time_limit && $estimated > $time_limit ) {
 		return new WP_Error(
-			'failsafe_limit_time',
+			'salvocofre_limit_time',
 			sprintf(
 				/* translators: 1: estimated duration in seconds, 2: PHP time limit in seconds. */
-				__( 'This backup is estimated to take about %1$d seconds, but PHP stops the request after %2$d seconds. Raise the max_execution_time setting or run the backup in the background.', 'failsafe-backup' ),
+				__( 'This backup is estimated to take about %1$d seconds, but PHP stops the request after %2$d seconds. Raise the max_execution_time setting or run the backup in the background.', 'salvocofre' ),
 				$estimated,
 				$time_limit
 			)

@@ -3,9 +3,9 @@
  * Status e-mails for backup runs.
  *
  * A failed run is always reported; a successful one only when the site owner
- * opted in through the "failsafe_email_on_success" option.
+ * opted in through the "salvocofre_email_on_success" option.
  *
- * @package Failsafe
+ * @package Salvocofre
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -15,21 +15,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Sends the status e-mail for one backup run.
  *
- * @param array|WP_Error $result   Value returned by failsafe_create_backup().
+ * @param array|WP_Error $result   Value returned by salvocofre_create_backup().
  * @param float|null     $duration Seconds the run took; falls back to $result['duration'].
  * @return bool True when WordPress handed the message to the mailer.
  */
-function failsafe_send_status_email( $result, $duration = null ) {
+function salvocofre_send_status_email( $result, $duration = null ) {
 	$failed = is_wp_error( $result );
 
-	if ( ! $failed && ! get_option( 'failsafe_email_on_success', false ) ) {
+	if ( ! $failed && ! get_option( 'salvocofre_email_on_success', false ) ) {
 		return false;
 	}
 
 	$recipient = (string) get_option( 'admin_email' );
 
 	if ( '' === $recipient || ! is_email( $recipient ) ) {
-		failsafe_status_email_log( 'no valid admin_email, status e-mail skipped' );
+		salvocofre_status_email_log( 'no valid admin_email, status e-mail skipped' );
 
 		return false;
 	}
@@ -40,22 +40,22 @@ function failsafe_send_status_email( $result, $duration = null ) {
 	 * @param string         $recipient Administrator e-mail address.
 	 * @param array|WP_Error $result    Backup result.
 	 */
-	$recipient = (string) apply_filters( 'failsafe_status_email_recipient', $recipient, $result );
+	$recipient = (string) apply_filters( 'salvocofre_status_email_recipient', $recipient, $result );
 
 	if ( '' === $recipient || ! is_email( $recipient ) ) {
-		failsafe_status_email_log( 'the recipient filter returned an invalid address' );
+		salvocofre_status_email_log( 'the recipient filter returned an invalid address' );
 
 		return false;
 	}
 
-	$subject = failsafe_status_email_subject( $failed );
-	$body    = failsafe_status_email_body( $result, $duration );
+	$subject = salvocofre_status_email_subject( $failed );
+	$body    = salvocofre_status_email_body( $result, $duration );
 	$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
 
 	$sent = wp_mail( $recipient, $subject, $body, $headers );
 
 	if ( ! $sent ) {
-		failsafe_status_email_log( 'wp_mail() refused the status e-mail for ' . $recipient );
+		salvocofre_status_email_log( 'wp_mail() refused the status e-mail for ' . $recipient );
 	}
 
 	return (bool) $sent;
@@ -66,7 +66,7 @@ function failsafe_send_status_email( $result, $duration = null ) {
  *
  * @return string
  */
-function failsafe_status_email_site_name() {
+function salvocofre_status_email_site_name() {
 	$name = trim( wp_specialchars_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES ) );
 
 	if ( '' !== $name ) {
@@ -84,12 +84,12 @@ function failsafe_status_email_site_name() {
  * @param bool $failed Whether the run failed.
  * @return string
  */
-function failsafe_status_email_subject( $failed ) {
+function salvocofre_status_email_subject( $failed ) {
 	return sprintf(
 		/* translators: 1: site name, 2: backup status ("failed" or "completed"). */
-		__( '[%1$s] Failsafe Backup %2$s', 'failsafe-backup' ),
-		failsafe_status_email_site_name(),
-		$failed ? __( 'failed', 'failsafe-backup' ) : __( 'completed', 'failsafe-backup' )
+		__( '[%1$s] Salvocofre Backup %2$s', 'salvocofre' ),
+		salvocofre_status_email_site_name(),
+		$failed ? __( 'failed', 'salvocofre' ) : __( 'completed', 'salvocofre' )
 	);
 }
 
@@ -99,11 +99,11 @@ function failsafe_status_email_subject( $failed ) {
  * Sizes come from the result array; the duration is shown when the caller
  * measured it. A failed run lists the error code and message instead.
  *
- * @param array|WP_Error $result   Value returned by failsafe_create_backup().
+ * @param array|WP_Error $result   Value returned by salvocofre_create_backup().
  * @param float|null     $duration Seconds the run took.
  * @return string
  */
-function failsafe_status_email_body( $result, $duration = null ) {
+function salvocofre_status_email_body( $result, $duration = null ) {
 	if ( null === $duration && is_array( $result ) && isset( $result['duration'] ) ) {
 		$duration = $result['duration'];
 	}
@@ -111,40 +111,40 @@ function failsafe_status_email_body( $result, $duration = null ) {
 	$lines   = array();
 	$lines[] = sprintf(
 		/* translators: %s: site URL. */
-		__( 'Site: %s', 'failsafe-backup' ),
+		__( 'Site: %s', 'salvocofre' ),
 		home_url()
 	);
 	$lines[] = '';
 
 	if ( is_wp_error( $result ) ) {
-		$lines[] = __( 'Status: failed', 'failsafe-backup' );
+		$lines[] = __( 'Status: failed', 'salvocofre' );
 		$lines[] = sprintf(
 			/* translators: 1: error code, 2: error message. */
-			__( 'Error: %1$s (%2$s)', 'failsafe-backup' ),
+			__( 'Error: %1$s (%2$s)', 'salvocofre' ),
 			$result->get_error_code(),
 			$result->get_error_message()
 		);
 
 		// The pre-flight check normally leaves this in the option cache.
-		if ( function_exists( 'failsafe_estimate_database_size' ) ) {
-			$estimated = failsafe_estimate_database_size();
+		if ( function_exists( 'salvocofre_estimate_database_size' ) ) {
+			$estimated = salvocofre_estimate_database_size();
 
 			if ( ! is_wp_error( $estimated ) ) {
 				$lines[] = sprintf(
 					/* translators: %s: estimated database size. */
-					__( 'Database (estimated): %s', 'failsafe-backup' ),
+					__( 'Database (estimated): %s', 'salvocofre' ),
 					size_format( max( 0, (int) $estimated ), 1 )
 				);
 			}
 		}
 	} else {
-		$lines[] = __( 'Status: completed', 'failsafe-backup' );
+		$lines[] = __( 'Status: completed', 'salvocofre' );
 
 		if ( is_array( $result ) ) {
 			if ( isset( $result['sql_bytes'] ) ) {
 				$lines[] = sprintf(
 					/* translators: %s: database dump size. */
-					__( 'Database dump: %s', 'failsafe-backup' ),
+					__( 'Database dump: %s', 'salvocofre' ),
 					size_format( max( 0, (int) $result['sql_bytes'] ), 1 )
 				);
 			}
@@ -152,7 +152,7 @@ function failsafe_status_email_body( $result, $duration = null ) {
 			if ( isset( $result['zip_bytes'] ) ) {
 				$lines[] = sprintf(
 					/* translators: %s: archive size. */
-					__( 'Archive: %s', 'failsafe-backup' ),
+					__( 'Archive: %s', 'salvocofre' ),
 					size_format( max( 0, (int) $result['zip_bytes'] ), 1 )
 				);
 			}
@@ -160,7 +160,7 @@ function failsafe_status_email_body( $result, $duration = null ) {
 			if ( isset( $result['zip_path'] ) ) {
 				$lines[] = sprintf(
 					/* translators: %s: archive path. */
-					__( 'Archive file: %s', 'failsafe-backup' ),
+					__( 'Archive file: %s', 'salvocofre' ),
 					(string) $result['zip_path']
 				);
 			}
@@ -170,14 +170,14 @@ function failsafe_status_email_body( $result, $duration = null ) {
 	if ( null !== $duration ) {
 		$lines[] = sprintf(
 			/* translators: %s: duration in seconds. */
-			__( 'Duration: %s seconds', 'failsafe-backup' ),
+			__( 'Duration: %s seconds', 'salvocofre' ),
 			number_format_i18n( max( 0, (float) $duration ), 1 )
 		);
 	}
 
 	if ( is_wp_error( $result ) ) {
 		$lines[] = '';
-		$lines[] = __( 'Check the site log for more details.', 'failsafe-backup' );
+		$lines[] = __( 'Check the site log for more details.', 'salvocofre' );
 	}
 
 	return implode( "\n", $lines ) . "\n";
@@ -189,8 +189,8 @@ function failsafe_status_email_body( $result, $duration = null ) {
  * @param string $message Message to log.
  * @return void
  */
-function failsafe_status_email_log( $message ) {
-	if ( function_exists( 'failsafe_log' ) ) {
-		failsafe_log( 'status email: ' . $message );
+function salvocofre_status_email_log( $message ) {
+	if ( function_exists( 'salvocofre_log' ) ) {
+		salvocofre_log( 'status email: ' . $message );
 	}
 }

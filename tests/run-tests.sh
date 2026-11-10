@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Failsafe Backup test suite.
+# Salvocofre Backup test suite.
 #
 # Usage: ./tests/run-tests.sh
 #
@@ -11,11 +11,11 @@ set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="$ROOT/src"
-WP="${WP_CONTAINER:-failsafe-wordpress-1}"
-DB="${DB_CONTAINER:-failsafe-db-1}"
-TESTS_REMOTE="/tmp/failsafe-tests"
-SQL_DIR_REMOTE="/var/www/html/wp-content/failsafe-backups"
-SQL_LOCAL="/tmp/failsafe-ci.sql"
+WP="${WP_CONTAINER:-salvocofre-wordpress-1}"
+DB="${DB_CONTAINER:-salvocofre-db-1}"
+TESTS_REMOTE="/tmp/salvocofre-tests"
+SQL_DIR_REMOTE="/var/www/html/wp-content/salvocofre-backups"
+SQL_LOCAL="/tmp/salvocofre-ci.sql"
 FAILED=0
 
 compose_value() {
@@ -29,7 +29,7 @@ step() { printf '\n=== %s ===\n' "$1"; }
 fail() { printf '  FAIL %s\n' "$1"; FAILED=1; }
 
 step "PHP lint"
-for file in "$SRC"/failsafe.php "$SRC"/uninstall.php "$SRC"/admin/*.php "$SRC"/includes/*.php; do
+for file in "$SRC"/salvocofre.php "$SRC"/uninstall.php "$SRC"/admin/*.php "$SRC"/includes/*.php; do
 	if php -l "$file" >/dev/null; then
 		printf '  ok   %s\n' "${file#"$ROOT"/}"
 	else
@@ -68,17 +68,17 @@ if [ "$COPIED" -eq 1 ]; then
 	docker exec "$DB" mariadb -uroot -p"$DB_ROOT_PASSWORD" \
 		-e 'DROP DATABASE IF EXISTS teste_ci; CREATE DATABASE teste_ci' >/dev/null 2>&1
 
-	if docker exec -i "$DB" mariadb -uroot -p"$DB_ROOT_PASSWORD" teste_ci <"$SQL_LOCAL" 2>/tmp/failsafe-import.err; then
+	if docker exec -i "$DB" mariadb -uroot -p"$DB_ROOT_PASSWORD" teste_ci <"$SQL_LOCAL" 2>/tmp/salvocofre-import.err; then
 		printf '  ok   dump imported without errors\n'
 	else
-		printf '  FAIL import error: %s\n' "$(head -1 /tmp/failsafe-import.err)"
+		printf '  FAIL import error: %s\n' "$(head -1 /tmp/salvocofre-import.err)"
 		FAILED=1
 	fi
 
-	if docker exec -i "$DB" mariadb -uroot -p"$DB_ROOT_PASSWORD" teste_ci <"$SQL_LOCAL" 2>/tmp/failsafe-import2.err; then
+	if docker exec -i "$DB" mariadb -uroot -p"$DB_ROOT_PASSWORD" teste_ci <"$SQL_LOCAL" 2>/tmp/salvocofre-import2.err; then
 		printf '  ok   restore over an existing database works\n'
 	else
-		printf '  FAIL second import error: %s\n' "$(head -1 /tmp/failsafe-import2.err)"
+		printf '  FAIL second import error: %s\n' "$(head -1 /tmp/salvocofre-import2.err)"
 		FAILED=1
 	fi
 
@@ -94,7 +94,7 @@ if [ "$COPIED" -eq 1 ]; then
 	done
 
 	docker exec "$DB" mariadb -uroot -p"$DB_ROOT_PASSWORD" -e 'DROP DATABASE IF EXISTS teste_ci' >/dev/null 2>&1
-	rm -f "$SQL_LOCAL" /tmp/failsafe-import.err /tmp/failsafe-import2.err
+	rm -f "$SQL_LOCAL" /tmp/salvocofre-import.err /tmp/salvocofre-import2.err
 else
 	fail "could not copy the SQL dump out of $WP"
 fi

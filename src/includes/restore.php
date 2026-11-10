@@ -6,33 +6,33 @@
  * temporary directory outside the web root, validated, and discarded; the
  * database dump is the only payload executed. The backup used is never deleted.
  *
- * @package Failsafe
+ * @package Salvocofre
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! defined( 'FAILSAFE_RESTORE_DUMP_NAME' ) ) {
-	define( 'FAILSAFE_RESTORE_DUMP_NAME', 'failsafe-backup.sql' );
+if ( ! defined( 'SALVOCOFRE_RESTORE_DUMP_NAME' ) ) {
+	define( 'SALVOCOFRE_RESTORE_DUMP_NAME', 'salvocofre.sql' );
 }
 
-if ( ! defined( 'FAILSAFE_RESTORE_MAX_ENTRIES' ) ) {
-	define( 'FAILSAFE_RESTORE_MAX_ENTRIES', 50000 );
+if ( ! defined( 'SALVOCOFRE_RESTORE_MAX_ENTRIES' ) ) {
+	define( 'SALVOCOFRE_RESTORE_MAX_ENTRIES', 50000 );
 }
 
-if ( ! defined( 'FAILSAFE_RESTORE_READ_CHUNK' ) ) {
-	define( 'FAILSAFE_RESTORE_READ_CHUNK', 65536 );
+if ( ! defined( 'SALVOCOFRE_RESTORE_READ_CHUNK' ) ) {
+	define( 'SALVOCOFRE_RESTORE_READ_CHUNK', 65536 );
 }
 
 /**
  * Incremental SQL statement parser.
  *
- * Implements the same state machine as failsafe_split_sql_statements() but
+ * Implements the same state machine as salvocofre_split_sql_statements() but
  * consumes the dump in pieces, so the whole file never has to be in memory.
  * Only the statement being parsed and a short look-ahead tail are kept.
  */
-final class Failsafe_Restore_SQL_Parser {
+final class Salvocofre_Restore_SQL_Parser {
 
 	/**
 	 * Current statement delimiter.
@@ -412,8 +412,8 @@ final class Failsafe_Restore_SQL_Parser {
  * @param string $sql Dump contents.
  * @return string[]
  */
-function failsafe_split_sql_statements( string $sql ): array {
-	$parser     = new Failsafe_Restore_SQL_Parser();
+function salvocofre_split_sql_statements( string $sql ): array {
+	$parser     = new Salvocofre_Restore_SQL_Parser();
 	$statements = $parser->push( $sql );
 
 	foreach ( $parser->finish() as $statement ) {
@@ -431,7 +431,7 @@ function failsafe_split_sql_statements( string $sql ): array {
  * restricted database users may not be allowed to change some session values.
  *
  * The dump is kept in memory here for compatibility. Callers handling a dump
- * file should use failsafe_restore_database_from_file(), which streams it.
+ * file should use salvocofre_restore_database_from_file(), which streams it.
  *
  * The statements are read from the SQL dump inside the validated backup
  * archive, not from user input. They are MySQL DDL and multi-row INSERT
@@ -441,30 +441,30 @@ function failsafe_split_sql_statements( string $sql ): array {
  * @param string $sql Dump contents.
  * @return true|WP_Error True when every statement ran.
  */
-function failsafe_restore_database( string $sql ) {
+function salvocofre_restore_database( string $sql ) {
 	global $wpdb;
 
-	$statements = failsafe_split_sql_statements( $sql );
+	$statements = salvocofre_split_sql_statements( $sql );
 
 	if ( empty( $statements ) ) {
-		return new WP_Error( 'failsafe_restore_empty', __( 'The dump does not contain any SQL statement.', 'failsafe-backup' ) );
+		return new WP_Error( 'salvocofre_restore_empty', __( 'The dump does not contain any SQL statement.', 'salvocofre' ) );
 	}
 
 	$total    = count( $statements );
 	$previous = $wpdb->suppress_errors( true );
 
-	failsafe_restore_begin_bulk();
+	salvocofre_restore_begin_bulk();
 
 	try {
 		foreach ( $statements as $position => $statement ) {
-			$result = failsafe_restore_execute_statement( $statement, (int) $position + 1, $total );
+			$result = salvocofre_restore_execute_statement( $statement, (int) $position + 1, $total );
 
 			if ( is_wp_error( $result ) ) {
 				return $result;
 			}
 		}
 	} finally {
-		failsafe_restore_end_bulk();
+		salvocofre_restore_end_bulk();
 		$wpdb->suppress_errors( $previous );
 	}
 
@@ -474,23 +474,23 @@ function failsafe_restore_database( string $sql ) {
 /**
  * Restores a database dump read from a file, without loading it into memory.
  *
- * The file is read in chunks of FAILSAFE_RESTORE_READ_CHUNK bytes, filterable
- * through "failsafe_restore_read_chunk". Every statement is executed as soon as
+ * The file is read in chunks of SALVOCOFRE_RESTORE_READ_CHUNK bytes, filterable
+ * through "salvocofre_restore_read_chunk". Every statement is executed as soon as
  * its delimiter is found, so memory usage follows the largest single
  * statement, not the size of the dump.
  *
  * @param string $path Absolute path of the SQL dump.
  * @return true|WP_Error True when every statement ran.
  */
-function failsafe_restore_database_from_file( string $path ) {
+function salvocofre_restore_database_from_file( string $path ) {
 	global $wpdb;
 
 	if ( ! is_file( $path ) || ! is_readable( $path ) ) {
 		return new WP_Error(
-			'failsafe_restore_file_unreadable',
+			'salvocofre_restore_file_unreadable',
 			sprintf(
 				/* translators: %s: path of the SQL dump. */
-				__( 'The database dump %s cannot be read.', 'failsafe-backup' ),
+				__( 'The database dump %s cannot be read.', 'salvocofre' ),
 				$path
 			)
 		);
@@ -501,27 +501,27 @@ function failsafe_restore_database_from_file( string $path ) {
 
 	if ( false === $handle ) {
 		return new WP_Error(
-			'failsafe_restore_file_open_failed',
+			'salvocofre_restore_file_open_failed',
 			sprintf(
 				/* translators: %s: path of the SQL dump. */
-				__( 'Could not open the database dump %s.', 'failsafe-backup' ),
+				__( 'Could not open the database dump %s.', 'salvocofre' ),
 				$path
 			)
 		);
 	}
 
-	$chunk_size = (int) apply_filters( 'failsafe_restore_read_chunk', FAILSAFE_RESTORE_READ_CHUNK );
+	$chunk_size = (int) apply_filters( 'salvocofre_restore_read_chunk', SALVOCOFRE_RESTORE_READ_CHUNK );
 
 	if ( $chunk_size < 1 ) {
-		$chunk_size = FAILSAFE_RESTORE_READ_CHUNK;
+		$chunk_size = SALVOCOFRE_RESTORE_READ_CHUNK;
 	}
 
-	$parser     = new Failsafe_Restore_SQL_Parser();
+	$parser     = new Salvocofre_Restore_SQL_Parser();
 	$position   = 0;
 	$bytes_read = 0;
 	$previous   = $wpdb->suppress_errors( true );
 
-	failsafe_restore_begin_bulk();
+	salvocofre_restore_begin_bulk();
 
 	try {
 		while ( ! feof( $handle ) ) {
@@ -530,10 +530,10 @@ function failsafe_restore_database_from_file( string $path ) {
 
 			if ( false === $chunk ) {
 				return new WP_Error(
-					'failsafe_restore_file_read_failed',
+					'salvocofre_restore_file_read_failed',
 					sprintf(
 						/* translators: 1: path of the SQL dump, 2: number of bytes read before the failure. */
-						__( 'The database dump %1$s could not be read after %2$d bytes.', 'failsafe-backup' ),
+						__( 'The database dump %1$s could not be read after %2$d bytes.', 'salvocofre' ),
 						$path,
 						$bytes_read
 					)
@@ -553,7 +553,7 @@ function failsafe_restore_database_from_file( string $path ) {
 
 			foreach ( $parser->push( $chunk ) as $statement ) {
 				$position++;
-				$result = failsafe_restore_execute_statement( $statement, $position );
+				$result = salvocofre_restore_execute_statement( $statement, $position );
 
 				if ( is_wp_error( $result ) ) {
 					return $result;
@@ -563,7 +563,7 @@ function failsafe_restore_database_from_file( string $path ) {
 
 		foreach ( $parser->finish() as $statement ) {
 			$position++;
-			$result = failsafe_restore_execute_statement( $statement, $position );
+			$result = salvocofre_restore_execute_statement( $statement, $position );
 
 			if ( is_wp_error( $result ) ) {
 				return $result;
@@ -571,10 +571,10 @@ function failsafe_restore_database_from_file( string $path ) {
 		}
 
 		if ( 0 === $position ) {
-			return new WP_Error( 'failsafe_restore_empty', __( 'The dump does not contain any SQL statement.', 'failsafe-backup' ) );
+			return new WP_Error( 'salvocofre_restore_empty', __( 'The dump does not contain any SQL statement.', 'salvocofre' ) );
 		}
 	} finally {
-		failsafe_restore_end_bulk();
+		salvocofre_restore_end_bulk();
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- see the fopen note above.
 		fclose( $handle );
@@ -593,7 +593,7 @@ function failsafe_restore_database_from_file( string $path ) {
  *
  * @return void
  */
-function failsafe_restore_begin_bulk() {
+function salvocofre_restore_begin_bulk() {
 	global $wpdb;
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- session setting for the restore, nothing to cache.
@@ -608,7 +608,7 @@ function failsafe_restore_begin_bulk() {
  *
  * @return void
  */
-function failsafe_restore_end_bulk() {
+function salvocofre_restore_end_bulk() {
 	global $wpdb;
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- session control for the restore, nothing to cache.
@@ -629,28 +629,28 @@ function failsafe_restore_end_bulk() {
  * @param int|null $total     Total number of statements, when known.
  * @return true|WP_Error True when the statement ran or its error was ignored.
  */
-function failsafe_restore_execute_statement( string $statement, int $position, ?int $total = null ) {
+function salvocofre_restore_execute_statement( string $statement, int $position, ?int $total = null ) {
 	global $wpdb;
 
 	$wpdb->last_error = '';
 
-	if ( ! failsafe_restore_allowed_statement( $statement ) ) {
+	if ( ! salvocofre_restore_allowed_statement( $statement ) ) {
 		$message = null === $total
 			? sprintf(
 				/* translators: 1: statement number, 2: truncated SQL command. */
-				__( 'Restore stopped at statement %1$d: this statement type is not allowed. Command: %2$s', 'failsafe-backup' ),
+				__( 'Restore stopped at statement %1$d: this statement type is not allowed. Command: %2$s', 'salvocofre' ),
 				$position,
-				failsafe_restore_statement_excerpt( $statement )
+				salvocofre_restore_statement_excerpt( $statement )
 			)
 			: sprintf(
 				/* translators: 1: statement number, 2: total number of statements, 3: truncated SQL command. */
-				__( 'Restore stopped at statement %1$d of %2$d: this statement type is not allowed. Command: %3$s', 'failsafe-backup' ),
+				__( 'Restore stopped at statement %1$d of %2$d: this statement type is not allowed. Command: %3$s', 'salvocofre' ),
 				$position,
 				$total,
-				failsafe_restore_statement_excerpt( $statement )
+				salvocofre_restore_statement_excerpt( $statement )
 			);
 
-		return new WP_Error( 'failsafe_restore_statement_blocked', $message );
+		return new WP_Error( 'salvocofre_restore_statement_blocked', $message );
 	}
 
 	// Statements come from the backup archive, never from user input; preparing them would break DDL.
@@ -661,10 +661,10 @@ function failsafe_restore_execute_statement( string $statement, int $position, ?
 		return true;
 	}
 
-	$error = '' !== $wpdb->last_error ? $wpdb->last_error : __( 'unknown database error', 'failsafe-backup' );
+	$error = '' !== $wpdb->last_error ? $wpdb->last_error : __( 'unknown database error', 'salvocofre' );
 
-	if ( failsafe_restore_is_best_effort_statement( $statement ) ) {
-		failsafe_log(
+	if ( salvocofre_restore_is_best_effort_statement( $statement ) ) {
+		salvocofre_log(
 			null === $total
 				? sprintf( 'restore: ignored error on statement %1$d: %2$s', $position, $error )
 				: sprintf( 'restore: ignored error on statement %1$d of %2$d: %3$s', $position, $total, $error )
@@ -674,22 +674,22 @@ function failsafe_restore_execute_statement( string $statement, int $position, ?
 	}
 
 	return new WP_Error(
-		'failsafe_restore_query_failed',
+		'salvocofre_restore_query_failed',
 		null === $total
 			? sprintf(
 				/* translators: 1: statement number, 2: database error message, 3: truncated SQL command. */
-				__( 'Restore stopped at statement %1$d: %2$s. Command: %3$s', 'failsafe-backup' ),
+				__( 'Restore stopped at statement %1$d: %2$s. Command: %3$s', 'salvocofre' ),
 				$position,
 				$error,
-				failsafe_restore_statement_excerpt( $statement )
+				salvocofre_restore_statement_excerpt( $statement )
 			)
 			: sprintf(
 				/* translators: 1: statement number, 2: total number of statements, 3: database error message, 4: truncated SQL command. */
-				__( 'Restore stopped at statement %1$d of %2$d: %3$s. Command: %4$s', 'failsafe-backup' ),
+				__( 'Restore stopped at statement %1$d of %2$d: %3$s. Command: %4$s', 'salvocofre' ),
 				$position,
 				$total,
 				$error,
-				failsafe_restore_statement_excerpt( $statement )
+				salvocofre_restore_statement_excerpt( $statement )
 			)
 	);
 }
@@ -700,7 +700,7 @@ function failsafe_restore_execute_statement( string $statement, int $position, ?
  * @param string $statement SQL statement.
  * @return bool
  */
-function failsafe_restore_is_best_effort_statement( string $statement ): bool {
+function salvocofre_restore_is_best_effort_statement( string $statement ): bool {
 	return 1 === preg_match( '/^\s*SET\b/i', $statement );
 }
 
@@ -713,9 +713,9 @@ function failsafe_restore_is_best_effort_statement( string $statement ): bool {
  *
  * @return string[] Upper-case statement prefixes.
  */
-function failsafe_restore_allowed_statements(): array {
+function salvocofre_restore_allowed_statements(): array {
 	return (array) apply_filters(
-		'failsafe_restore_allowed_statements',
+		'salvocofre_restore_allowed_statements',
 		array(
 			'SET',
 			'DROP TABLE',
@@ -740,8 +740,8 @@ function failsafe_restore_allowed_statements(): array {
  * @param string $statement SQL statement.
  * @return bool
  */
-function failsafe_restore_allowed_statement( string $statement ): bool {
-	$allowed = failsafe_restore_allowed_statements();
+function salvocofre_restore_allowed_statement( string $statement ): bool {
+	$allowed = salvocofre_restore_allowed_statements();
 
 	if ( empty( $allowed ) ) {
 		return false;
@@ -759,7 +759,7 @@ function failsafe_restore_allowed_statement( string $statement ): bool {
  * @param int    $length    Maximum number of characters.
  * @return string
  */
-function failsafe_restore_statement_excerpt( string $statement, int $length = 200 ): string {
+function salvocofre_restore_statement_excerpt( string $statement, int $length = 200 ): string {
 	$excerpt = trim( (string) preg_replace( '/\s+/', ' ', $statement ) );
 
 	if ( function_exists( 'mb_strlen' ) && function_exists( 'mb_substr' ) ) {
@@ -782,22 +782,22 @@ function failsafe_restore_statement_excerpt( string $statement, int $length = 20
  *
  * @return true|WP_Error
  */
-function failsafe_create_restore_safety_backup() {
-	if ( ! function_exists( 'failsafe_create_backup' ) ) {
+function salvocofre_create_restore_safety_backup() {
+	if ( ! function_exists( 'salvocofre_create_backup' ) ) {
 		return new WP_Error(
-			'failsafe_restore_no_runner',
-			__( 'The backup routine is not available, so the restore was aborted.', 'failsafe-backup' )
+			'salvocofre_restore_no_runner',
+			__( 'The backup routine is not available, so the restore was aborted.', 'salvocofre' )
 		);
 	}
 
-	$result = failsafe_create_backup();
+	$result = salvocofre_create_backup();
 
 	if ( is_wp_error( $result ) ) {
 		return new WP_Error(
-			'failsafe_restore_safety_backup_failed',
+			'salvocofre_restore_safety_backup_failed',
 			sprintf(
 				/* translators: %s: database or filesystem error message. */
-				__( 'The safety backup could not be created, so the restore was aborted: %s', 'failsafe-backup' ),
+				__( 'The safety backup could not be created, so the restore was aborted: %s', 'salvocofre' ),
 				$result->get_error_message()
 			)
 		);
@@ -817,32 +817,32 @@ function failsafe_create_restore_safety_backup() {
  * @param string $target_dir Optional directory to extract into.
  * @return string|WP_Error Absolute path of the extraction directory.
  */
-function failsafe_extract_backup_archive( string $zip_path, string $target_dir = '' ) {
+function salvocofre_extract_backup_archive( string $zip_path, string $target_dir = '' ) {
 	if ( ! class_exists( 'ZipArchive' ) ) {
-		return new WP_Error( 'failsafe_no_ziparchive', __( 'The ZipArchive extension is not available.', 'failsafe-backup' ) );
+		return new WP_Error( 'salvocofre_no_ziparchive', __( 'The ZipArchive extension is not available.', 'salvocofre' ) );
 	}
 
 	if ( ! is_readable( $zip_path ) ) {
 		return new WP_Error(
-			'failsafe_restore_zip_unreadable',
+			'salvocofre_restore_zip_unreadable',
 			sprintf(
 				/* translators: %s: archive path. */
-				__( 'The backup archive %s cannot be read.', 'failsafe-backup' ),
+				__( 'The backup archive %s cannot be read.', 'salvocofre' ),
 				$zip_path
 			)
 		);
 	}
 
 	if ( '' === $target_dir ) {
-		$target_dir = trailingslashit( get_temp_dir() ) . 'failsafe-restore-' . wp_generate_password( 16, false, false );
+		$target_dir = trailingslashit( get_temp_dir() ) . 'salvocofre-restore-' . wp_generate_password( 16, false, false );
 	}
 
 	if ( ! wp_mkdir_p( $target_dir ) && ! is_dir( $target_dir ) ) {
 		return new WP_Error(
-			'failsafe_restore_temp_failed',
+			'salvocofre_restore_temp_failed',
 			sprintf(
 				/* translators: %s: directory path. */
-				__( 'Could not create the temporary directory %s.', 'failsafe-backup' ),
+				__( 'Could not create the temporary directory %s.', 'salvocofre' ),
 				$target_dir
 			)
 		);
@@ -855,11 +855,11 @@ function failsafe_extract_backup_archive( string $zip_path, string $target_dir =
 	$real_root   = realpath( ABSPATH );
 
 	if ( false === $real_target || ( false !== $real_root && ( $real_target === $real_root || str_starts_with( $real_target . DIRECTORY_SEPARATOR, trailingslashit( $real_root ) ) ) ) ) {
-		failsafe_remove_temp_directory( $target_dir );
+		salvocofre_remove_temp_directory( $target_dir );
 
 		return new WP_Error(
-			'failsafe_restore_temp_inside_root',
-			__( 'The extraction directory must live outside the WordPress installation.', 'failsafe-backup' )
+			'salvocofre_restore_temp_inside_root',
+			__( 'The extraction directory must live outside the WordPress installation.', 'salvocofre' )
 		);
 	}
 
@@ -867,37 +867,37 @@ function failsafe_extract_backup_archive( string $zip_path, string $target_dir =
 	$opened = $zip->open( $zip_path, ZipArchive::CHECKCONS );
 
 	if ( true !== $opened ) {
-		failsafe_remove_temp_directory( $target_dir );
+		salvocofre_remove_temp_directory( $target_dir );
 
 		return new WP_Error(
-			'failsafe_restore_zip_open',
+			'salvocofre_restore_zip_open',
 			sprintf(
 				/* translators: %d: ZipArchive error code. */
-				__( 'Could not open the backup archive (error %d).', 'failsafe-backup' ),
+				__( 'Could not open the backup archive (error %d).', 'salvocofre' ),
 				$opened
 			)
 		);
 	}
 
 	if ( 0 === $zip->numFiles ) {
-		return failsafe_restore_abort_extraction(
+		return salvocofre_restore_abort_extraction(
 			$zip,
 			$target_dir,
-			new WP_Error( 'failsafe_restore_zip_empty', __( 'The backup archive is empty.', 'failsafe-backup' ) )
+			new WP_Error( 'salvocofre_restore_zip_empty', __( 'The backup archive is empty.', 'salvocofre' ) )
 		);
 	}
 
-	$max_entries = (int) apply_filters( 'failsafe_restore_max_entries', FAILSAFE_RESTORE_MAX_ENTRIES );
+	$max_entries = (int) apply_filters( 'salvocofre_restore_max_entries', SALVOCOFRE_RESTORE_MAX_ENTRIES );
 
 	if ( $max_entries > 0 && $zip->numFiles > $max_entries ) {
-		return failsafe_restore_abort_extraction(
+		return salvocofre_restore_abort_extraction(
 			$zip,
 			$target_dir,
 			new WP_Error(
-				'failsafe_restore_zip_too_large',
+				'salvocofre_restore_zip_too_large',
 				sprintf(
 					/* translators: 1: number of entries, 2: maximum number of entries. */
-					__( 'The archive has %1$d entries and exceeds the limit of %2$d.', 'failsafe-backup' ),
+					__( 'The archive has %1$d entries and exceeds the limit of %2$d.', 'salvocofre' ),
 					(int) $zip->numFiles,
 					$max_entries
 				)
@@ -909,24 +909,24 @@ function failsafe_extract_backup_archive( string $zip_path, string $target_dir =
 		$name = $zip->getNameIndex( $index );
 
 		if ( false === $name ) {
-			return failsafe_restore_abort_extraction(
+			return salvocofre_restore_abort_extraction(
 				$zip,
 				$target_dir,
-				new WP_Error( 'failsafe_restore_entry_unreadable', __( 'An archive entry could not be read.', 'failsafe-backup' ) )
+				new WP_Error( 'salvocofre_restore_entry_unreadable', __( 'An archive entry could not be read.', 'salvocofre' ) )
 			);
 		}
 
-		$valid = failsafe_restore_validate_entry_name( $name );
+		$valid = salvocofre_restore_validate_entry_name( $name );
 
 		if ( is_wp_error( $valid ) ) {
-			return failsafe_restore_abort_extraction(
+			return salvocofre_restore_abort_extraction(
 				$zip,
 				$target_dir,
 				new WP_Error(
-					'failsafe_restore_entry_rejected',
+					'salvocofre_restore_entry_rejected',
 					sprintf(
 						/* translators: 1: archive entry name, 2: rejection reason. */
-						__( 'The archive entry %1$s was rejected: %2$s', 'failsafe-backup' ),
+						__( 'The archive entry %1$s was rejected: %2$s', 'salvocofre' ),
 						$name,
 						$valid->get_error_message()
 					)
@@ -934,15 +934,15 @@ function failsafe_extract_backup_archive( string $zip_path, string $target_dir =
 			);
 		}
 
-		if ( failsafe_restore_entry_is_symlink( $zip, $index ) ) {
-			return failsafe_restore_abort_extraction(
+		if ( salvocofre_restore_entry_is_symlink( $zip, $index ) ) {
+			return salvocofre_restore_abort_extraction(
 				$zip,
 				$target_dir,
 				new WP_Error(
-					'failsafe_restore_entry_symlink',
+					'salvocofre_restore_entry_symlink',
 					sprintf(
 						/* translators: %s: archive entry name. */
-						__( 'The archive entry %s is a symbolic link, which is not allowed.', 'failsafe-backup' ),
+						__( 'The archive entry %s is a symbolic link, which is not allowed.', 'salvocofre' ),
 						$name
 					)
 				)
@@ -954,10 +954,10 @@ function failsafe_extract_backup_archive( string $zip_path, string $target_dir =
 		$name = $zip->getNameIndex( $index );
 
 		if ( false === $name || '' === $name ) {
-			return failsafe_restore_abort_extraction(
+			return salvocofre_restore_abort_extraction(
 				$zip,
 				$target_dir,
-				new WP_Error( 'failsafe_restore_entry_unreadable', __( 'An archive entry could not be read.', 'failsafe-backup' ) )
+				new WP_Error( 'salvocofre_restore_entry_unreadable', __( 'An archive entry could not be read.', 'salvocofre' ) )
 			);
 		}
 
@@ -965,14 +965,14 @@ function failsafe_extract_backup_archive( string $zip_path, string $target_dir =
 			$directory = $real_target . DIRECTORY_SEPARATOR . rtrim( str_replace( '\\', '/', $name ), '/' );
 
 			if ( ! wp_mkdir_p( $directory ) && ! is_dir( $directory ) ) {
-				return failsafe_restore_abort_extraction(
+				return salvocofre_restore_abort_extraction(
 					$zip,
 					$target_dir,
 					new WP_Error(
-						'failsafe_restore_extract_failed',
+						'salvocofre_restore_extract_failed',
 						sprintf(
 							/* translators: %s: directory path. */
-							__( 'Could not create the extracted directory %s.', 'failsafe-backup' ),
+							__( 'Could not create the extracted directory %s.', 'salvocofre' ),
 							$directory
 						)
 					)
@@ -985,14 +985,14 @@ function failsafe_extract_backup_archive( string $zip_path, string $target_dir =
 		$parent = dirname( str_replace( '\\', '/', $name ) );
 
 		if ( '.' !== $parent && ! wp_mkdir_p( $real_target . DIRECTORY_SEPARATOR . $parent ) && ! is_dir( $real_target . DIRECTORY_SEPARATOR . $parent ) ) {
-			return failsafe_restore_abort_extraction(
+			return salvocofre_restore_abort_extraction(
 				$zip,
 				$target_dir,
 				new WP_Error(
-					'failsafe_restore_extract_failed',
+					'salvocofre_restore_extract_failed',
 					sprintf(
 						/* translators: %s: directory path. */
-						__( 'Could not create the extracted directory %s.', 'failsafe-backup' ),
+						__( 'Could not create the extracted directory %s.', 'salvocofre' ),
 						$real_target . DIRECTORY_SEPARATOR . $parent
 					)
 				)
@@ -1000,14 +1000,14 @@ function failsafe_extract_backup_archive( string $zip_path, string $target_dir =
 		}
 
 		if ( ! $zip->extractTo( $real_target, $name ) ) {
-			return failsafe_restore_abort_extraction(
+			return salvocofre_restore_abort_extraction(
 				$zip,
 				$target_dir,
 				new WP_Error(
-					'failsafe_restore_extract_failed',
+					'salvocofre_restore_extract_failed',
 					sprintf(
 						/* translators: %s: archive entry name. */
-						__( 'Could not extract the archive entry %s.', 'failsafe-backup' ),
+						__( 'Could not extract the archive entry %s.', 'salvocofre' ),
 						$name
 					)
 				)
@@ -1028,9 +1028,9 @@ function failsafe_extract_backup_archive( string $zip_path, string $target_dir =
  * @param WP_Error   $error      Error to return.
  * @return WP_Error
  */
-function failsafe_restore_abort_extraction( ZipArchive $zip, string $target_dir, WP_Error $error ) {
+function salvocofre_restore_abort_extraction( ZipArchive $zip, string $target_dir, WP_Error $error ) {
 	$zip->close();
-	failsafe_remove_temp_directory( $target_dir );
+	salvocofre_remove_temp_directory( $target_dir );
 
 	return $error;
 }
@@ -1041,11 +1041,11 @@ function failsafe_restore_abort_extraction( ZipArchive $zip, string $target_dir,
  * @param string $name Entry name as stored in the archive.
  * @return true|WP_Error
  */
-function failsafe_restore_validate_entry_name( string $name ) {
+function salvocofre_restore_validate_entry_name( string $name ) {
 	if ( '' === $name || str_contains( $name, "\0" ) ) {
 		return new WP_Error(
-			'failsafe_restore_entry_invalid',
-			__( 'the entry name is empty or contains a null byte.', 'failsafe-backup' )
+			'salvocofre_restore_entry_invalid',
+			__( 'the entry name is empty or contains a null byte.', 'salvocofre' )
 		);
 	}
 
@@ -1053,23 +1053,23 @@ function failsafe_restore_validate_entry_name( string $name ) {
 
 	if ( str_starts_with( $normalized, '/' ) ) {
 		return new WP_Error(
-			'failsafe_restore_entry_absolute',
-			__( 'absolute paths are not allowed.', 'failsafe-backup' )
+			'salvocofre_restore_entry_absolute',
+			__( 'absolute paths are not allowed.', 'salvocofre' )
 		);
 	}
 
 	if ( 1 === preg_match( '/^[A-Za-z]:/', $normalized ) ) {
 		return new WP_Error(
-			'failsafe_restore_entry_absolute',
-			__( 'absolute Windows paths are not allowed.', 'failsafe-backup' )
+			'salvocofre_restore_entry_absolute',
+			__( 'absolute Windows paths are not allowed.', 'salvocofre' )
 		);
 	}
 
 	foreach ( explode( '/', $normalized ) as $segment ) {
 		if ( '..' === $segment ) {
 			return new WP_Error(
-				'failsafe_restore_entry_traversal',
-				__( 'parent directory references are not allowed.', 'failsafe-backup' )
+				'salvocofre_restore_entry_traversal',
+				__( 'parent directory references are not allowed.', 'salvocofre' )
 			);
 		}
 	}
@@ -1084,7 +1084,7 @@ function failsafe_restore_validate_entry_name( string $name ) {
  * @param int        $index Entry index.
  * @return bool
  */
-function failsafe_restore_entry_is_symlink( ZipArchive $zip, int $index ): bool {
+function salvocofre_restore_entry_is_symlink( ZipArchive $zip, int $index ): bool {
 	$operating_system = 0;
 	$attributes       = 0;
 
@@ -1111,7 +1111,7 @@ function failsafe_restore_entry_is_symlink( ZipArchive $zip, int $index ): bool 
  * @param string $directory Absolute path to remove.
  * @return bool
  */
-function failsafe_remove_temp_directory( string $directory ): bool {
+function salvocofre_remove_temp_directory( string $directory ): bool {
 	$real_directory = realpath( $directory );
 	$real_temp      = realpath( get_temp_dir() );
 
@@ -1128,7 +1128,7 @@ function failsafe_remove_temp_directory( string $directory ): bool {
 	$filesystem = WP_Filesystem( false, $real_directory, true ) ? $GLOBALS['wp_filesystem'] : false;
 
 	if ( ! $filesystem ) {
-		failsafe_log( 'restore cleanup: the filesystem API could not be initialised.' );
+		salvocofre_log( 'restore cleanup: the filesystem API could not be initialised.' );
 
 		return false;
 	}
@@ -1153,7 +1153,7 @@ function failsafe_remove_temp_directory( string $directory ): bool {
 			$failed = ! $filesystem->delete( $pathname, false, 'f' ) || $failed;
 		}
 	} catch ( Exception $exception ) {
-		failsafe_log( 'restore cleanup: ' . $exception->getMessage() );
+		salvocofre_log( 'restore cleanup: ' . $exception->getMessage() );
 
 		return false;
 	}

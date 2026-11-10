@@ -2,22 +2,22 @@
 /**
  * Backup runner: builds the SQL dump and the site archive.
  *
- * @package Failsafe
+ * @package Salvocofre
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-add_action( 'admin_post_failsafe_run_backup', 'failsafe_handle_run_backup' );
+add_action( 'admin_post_salvocofre_run_backup', 'salvocofre_handle_run_backup' );
 
 /**
  * Capability required to run a backup.
  *
  * @return string
  */
-function failsafe_backup_capability() {
-	return (string) apply_filters( 'failsafe_backup_capability', 'manage_options' );
+function salvocofre_backup_capability() {
+	return (string) apply_filters( 'salvocofre_backup_capability', 'manage_options' );
 }
 
 /**
@@ -25,20 +25,20 @@ function failsafe_backup_capability() {
  *
  * @return void
  */
-function failsafe_handle_run_backup() {
-	if ( ! current_user_can( failsafe_backup_capability() ) ) {
+function salvocofre_handle_run_backup() {
+	if ( ! current_user_can( salvocofre_backup_capability() ) ) {
 		wp_die( '', 403 );
 	}
 
-	check_admin_referer( 'failsafe_run_backup', 'failsafe_backup_nonce' );
+	check_admin_referer( 'salvocofre_run_backup', 'salvocofre_backup_nonce' );
 
 	// A manual run must never overlap a scheduled one: both write the same files.
-	$lock = failsafe_cron_acquire_lock();
+	$lock = salvocofre_cron_acquire_lock();
 
 	if ( is_wp_error( $lock ) ) {
 		wp_safe_redirect(
-			failsafe_backups_page_url(
-				array( 'failsafe_notice' => 'busy' )
+			salvocofre_backups_page_url(
+				array( 'salvocofre_notice' => 'busy' )
 			)
 		);
 		exit;
@@ -47,24 +47,24 @@ function failsafe_handle_run_backup() {
 	$started = microtime( true );
 
 	try {
-		$result = failsafe_create_backup();
+		$result = salvocofre_create_backup();
 	} finally {
 		// WP_Error, redirects and exceptions all leave through here.
-		failsafe_cron_release_lock();
+		salvocofre_cron_release_lock();
 	}
 
 	// Only a run that held the lock reaches this point, so no mail for "busy".
-	failsafe_send_status_email( $result, microtime( true ) - $started );
+	salvocofre_send_status_email( $result, microtime( true ) - $started );
 
 	if ( is_wp_error( $result ) ) {
-		failsafe_log( $result->get_error_code() . ': ' . $result->get_error_message() );
+		salvocofre_log( $result->get_error_code() . ': ' . $result->get_error_message() );
 
 		// Only the error code travels in the URL: messages may hold absolute paths.
 		wp_safe_redirect(
-			failsafe_backups_page_url(
+			salvocofre_backups_page_url(
 				array(
-					'failsafe_notice' => 'error',
-					'failsafe_error'  => $result->get_error_code(),
+					'salvocofre_notice' => 'error',
+					'salvocofre_error'  => $result->get_error_code(),
 				)
 			)
 		);
@@ -72,10 +72,10 @@ function failsafe_handle_run_backup() {
 	}
 
 	wp_safe_redirect(
-		failsafe_backups_page_url(
+		salvocofre_backups_page_url(
 			array(
-				'failsafe_notice' => 'created',
-				'failsafe_backup' => $result['base'],
+				'salvocofre_notice' => 'created',
+				'salvocofre_backup' => $result['base'],
 			)
 		)
 	);
@@ -88,10 +88,10 @@ function failsafe_handle_run_backup() {
  * @param string $base Optional base name; generated when empty.
  * @return array|WP_Error Paths and sizes on success, WP_Error on failure.
  */
-function failsafe_create_backup( $base = '' ) {
-	do_action( 'failsafe_backup_started', $base );
+function salvocofre_create_backup( $base = '' ) {
+	do_action( 'salvocofre_backup_started', $base );
 
-	$result = failsafe_create_backup_now( $base );
+	$result = salvocofre_create_backup_now( $base );
 
 	if ( is_wp_error( $result ) ) {
 		/**
@@ -100,7 +100,7 @@ function failsafe_create_backup( $base = '' ) {
 		 * @param WP_Error $error Failure details.
 		 * @param string   $base  Base name requested for the run, empty when generated.
 		 */
-		do_action( 'failsafe_backup_failed', $result, $base );
+		do_action( 'salvocofre_backup_failed', $result, $base );
 	} else {
 		/**
 		 * Fires after a backup set is written to disk.
@@ -111,7 +111,7 @@ function failsafe_create_backup( $base = '' ) {
 		 *
 		 * @param array $result Base name, paths and sizes of the new set.
 		 */
-		do_action( 'failsafe_backup_completed', $result );
+		do_action( 'salvocofre_backup_completed', $result );
 	}
 
 	return $result;
@@ -123,19 +123,19 @@ function failsafe_create_backup( $base = '' ) {
  * @param string $base Optional base name; generated when empty.
  * @return array|WP_Error
  */
-function failsafe_create_backup_now( $base = '' ) {
+function salvocofre_create_backup_now( $base = '' ) {
 	if ( '' === $base ) {
-		$base = failsafe_generate_backup_base();
-	} elseif ( ! failsafe_is_valid_backup_name( $base ) ) {
-		return new WP_Error( 'failsafe_invalid_backup', __( 'Invalid backup name.', 'failsafe-backup' ) );
+		$base = salvocofre_generate_backup_base();
+	} elseif ( ! salvocofre_is_valid_backup_name( $base ) ) {
+		return new WP_Error( 'salvocofre_invalid_backup', __( 'Invalid backup name.', 'salvocofre' ) );
 	}
 
 	if ( is_wp_error( $base ) ) {
 		return $base;
 	}
 
-	$sql_path = failsafe_backup_path( $base, 'sql' );
-	$zip_path = failsafe_backup_path( $base, 'zip' );
+	$sql_path = salvocofre_backup_path( $base, 'sql' );
+	$zip_path = salvocofre_backup_path( $base, 'zip' );
 
 	if ( is_wp_error( $sql_path ) ) {
 		return $sql_path;
@@ -145,19 +145,19 @@ function failsafe_create_backup_now( $base = '' ) {
 		return $zip_path;
 	}
 
-	$limits = failsafe_check_limits();
+	$limits = salvocofre_check_limits();
 
 	if ( is_wp_error( $limits ) ) {
 		return $limits;
 	}
 
-	$bytes = failsafe_write_sql_dump( $sql_path );
+	$bytes = salvocofre_write_sql_dump( $sql_path );
 
 	if ( is_wp_error( $bytes ) ) {
 		return $bytes;
 	}
 
-	$zipped = failsafe_create_zip( $sql_path, $zip_path );
+	$zipped = salvocofre_create_zip( $sql_path, $zip_path );
 
 	if ( is_wp_error( $zipped ) ) {
 		// A half-written archive must not look like a good backup in the list.
@@ -171,7 +171,7 @@ function failsafe_create_backup_now( $base = '' ) {
 	$zip_bytes = (int) filesize( $zip_path );
 
 	// Retention only runs after both files are complete.
-	failsafe_apply_retention( $base );
+	salvocofre_apply_retention( $base );
 
 	return array(
 		'base'      => $base,
@@ -187,30 +187,30 @@ function failsafe_create_backup_now( $base = '' ) {
  *
  * @return string|WP_Error
  */
-function failsafe_generate_backup_base() {
+function salvocofre_generate_backup_base() {
 	$timestamp = wp_date( 'Ymd-His' );
 
 	if ( false === $timestamp ) {
-		return new WP_Error( 'failsafe_date_failed', __( 'Could not read the current time.', 'failsafe-backup' ) );
+		return new WP_Error( 'salvocofre_date_failed', __( 'Could not read the current time.', 'salvocofre' ) );
 	}
 
-	$base = 'failsafe-' . $timestamp;
+	$base = 'salvocofre-' . $timestamp;
 
-	if ( ! failsafe_backup_base_exists( $base ) ) {
+	if ( ! salvocofre_backup_base_exists( $base ) ) {
 		return $base;
 	}
 
 	for ( $suffix = 2; $suffix <= 9; $suffix++ ) {
 		$candidate = $base . '-' . $suffix;
 
-		if ( ! failsafe_backup_base_exists( $candidate ) ) {
+		if ( ! salvocofre_backup_base_exists( $candidate ) ) {
 			return $candidate;
 		}
 	}
 
 	return new WP_Error(
-		'failsafe_name_exhausted',
-		__( 'Could not find an unused backup name for this second. Try again in a moment.', 'failsafe-backup' )
+		'salvocofre_name_exhausted',
+		__( 'Could not find an unused backup name for this second. Try again in a moment.', 'salvocofre' )
 	);
 }
 
@@ -220,9 +220,9 @@ function failsafe_generate_backup_base() {
  * @param string $base Backup base name.
  * @return bool
  */
-function failsafe_backup_base_exists( $base ) {
+function salvocofre_backup_base_exists( $base ) {
 	foreach ( array( 'zip', 'sql' ) as $ext ) {
-		$path = failsafe_backup_path( $base, $ext );
+		$path = salvocofre_backup_path( $base, $ext );
 
 		if ( ! is_wp_error( $path ) && file_exists( $path ) ) {
 			return true;
@@ -237,7 +237,7 @@ function failsafe_backup_base_exists( $base ) {
  *
  * @return string|WP_Error Dump contents on success.
  */
-function failsafe_build_sql_dump() {
+function salvocofre_build_sql_dump() {
 	global $wpdb;
 
 	// SHOW TABLES takes no placeholders and the list is specific to this request.
@@ -245,20 +245,20 @@ function failsafe_build_sql_dump() {
 	$tables = $wpdb->get_col( 'SHOW TABLES' );
 
 	if ( $wpdb->last_error ) {
-		return new WP_Error( 'failsafe_tables_failed', $wpdb->last_error );
+		return new WP_Error( 'salvocofre_tables_failed', $wpdb->last_error );
 	}
 
 	if ( empty( $tables ) ) {
-		return new WP_Error( 'failsafe_no_tables', __( 'No tables found in the database.', 'failsafe-backup' ) );
+		return new WP_Error( 'salvocofre_no_tables', __( 'No tables found in the database.', 'salvocofre' ) );
 	}
 
 	/** This filter is documented in includes/dump.php */
-	$tables = array_values( (array) apply_filters( 'failsafe_dump_tables', $tables ) );
+	$tables = array_values( (array) apply_filters( 'salvocofre_dump_tables', $tables ) );
 
 	$charset = preg_replace( '/[^A-Za-z0-9_]/', '', (string) $wpdb->charset );
 	$collate = preg_replace( '/[^A-Za-z0-9_]/', '', (string) $wpdb->collate );
 
-	$sql  = "-- Failsafe Backup SQL dump\n";
+	$sql  = "-- Salvocofre Backup SQL dump\n";
 	$sql .= '-- Site: ' . home_url() . "\n";
 	$sql .= '-- Date: ' . gmdate( 'c' ) . "\n\n";
 	$sql .= "SET SESSION sql_mode = '';\n";
@@ -279,7 +279,7 @@ function failsafe_build_sql_dump() {
 		$create = $wpdb->get_row( $wpdb->prepare( 'SHOW CREATE TABLE %i', $table ), ARRAY_A );
 
 		if ( $wpdb->last_error ) {
-			return new WP_Error( 'failsafe_create_table_failed', $table . ': ' . $wpdb->last_error );
+			return new WP_Error( 'salvocofre_create_table_failed', $table . ': ' . $wpdb->last_error );
 		}
 
 		if ( empty( $create ) || empty( $create['Create Table'] ) ) {
@@ -295,7 +295,7 @@ function failsafe_build_sql_dump() {
 		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i', $table ), ARRAY_A );
 
 		if ( $wpdb->last_error ) {
-			return new WP_Error( 'failsafe_select_failed', $table . ': ' . $wpdb->last_error );
+			return new WP_Error( 'salvocofre_select_failed', $table . ': ' . $wpdb->last_error );
 		}
 
 		if ( empty( $rows ) ) {
@@ -316,7 +316,7 @@ function failsafe_build_sql_dump() {
 			$values = array();
 
 			foreach ( $columns as $column ) {
-				$values[] = failsafe_sql_value( $row[ $column ] );
+				$values[] = salvocofre_sql_value( $row[ $column ] );
 			}
 
 			$sql .= 'INSERT INTO ' . $table_name . ' (' . $sql_columns . ') VALUES (' . implode( ', ', $values ) . ");\n";
@@ -337,7 +337,7 @@ function failsafe_build_sql_dump() {
  * @param mixed $value Raw column value.
  * @return string
  */
-function failsafe_sql_value( $value ) {
+function salvocofre_sql_value( $value ) {
 	if ( null === $value ) {
 		return 'NULL';
 	}
@@ -361,9 +361,9 @@ function failsafe_sql_value( $value ) {
  * @param string $zip_path Absolute path of the ZIP archive to create.
  * @return true|WP_Error True on success.
  */
-function failsafe_create_zip( $sql_path, $zip_path ) {
+function salvocofre_create_zip( $sql_path, $zip_path ) {
 	if ( ! class_exists( 'ZipArchive' ) ) {
-		return new WP_Error( 'failsafe_no_ziparchive', __( 'The ZipArchive extension is not available.', 'failsafe-backup' ) );
+		return new WP_Error( 'salvocofre_no_ziparchive', __( 'The ZipArchive extension is not available.', 'salvocofre' ) );
 	}
 
 	$zip    = new ZipArchive();
@@ -371,10 +371,10 @@ function failsafe_create_zip( $sql_path, $zip_path ) {
 
 	if ( true !== $opened ) {
 		return new WP_Error(
-			'failsafe_zip_open',
+			'salvocofre_zip_open',
 			sprintf(
 				/* translators: %d: ZipArchive error code. */
-				__( 'Could not open the archive (error %d).', 'failsafe-backup' ),
+				__( 'Could not open the archive (error %d).', 'salvocofre' ),
 				$opened
 			)
 		);
@@ -388,7 +388,7 @@ function failsafe_create_zip( $sql_path, $zip_path ) {
 
 	$root = rtrim( ABSPATH, '/\\' );
 	$skip = array(
-		FAILSAFE_BACKUP_DIR,
+		SALVOCOFRE_BACKUP_DIR,
 		$root . '/wp-content/cache',
 		$root . '/wp-content/upgrade',
 	);
@@ -399,7 +399,7 @@ function failsafe_create_zip( $sql_path, $zip_path ) {
 	 * @param string[] $skip Absolute paths to skip.
 	 * @param string   $root Installation root being archived.
 	 */
-	$skip = (array) apply_filters( 'failsafe_backup_excluded_paths', $skip, $root );
+	$skip = (array) apply_filters( 'salvocofre_backup_excluded_paths', $skip, $root );
 
 	try {
 		$iterator = new RecursiveIteratorIterator(
@@ -410,7 +410,7 @@ function failsafe_create_zip( $sql_path, $zip_path ) {
 		foreach ( $iterator as $file ) {
 			$pathname = $file->getPathname();
 
-			if ( failsafe_path_is_excluded( $pathname, $skip ) || ! is_readable( $pathname ) ) {
+			if ( salvocofre_path_is_excluded( $pathname, $skip ) || ! is_readable( $pathname ) ) {
 				continue;
 			}
 
@@ -421,19 +421,19 @@ function failsafe_create_zip( $sql_path, $zip_path ) {
 	} catch ( Exception $exception ) {
 		$zip->close();
 
-		return new WP_Error( 'failsafe_zip_iterate', $exception->getMessage() );
+		return new WP_Error( 'salvocofre_zip_iterate', $exception->getMessage() );
 	}
 
 	if ( ! $zip->close() ) {
-		return new WP_Error( 'failsafe_zip_close', __( 'Could not finish the archive.', 'failsafe-backup' ) );
+		return new WP_Error( 'salvocofre_zip_close', __( 'Could not finish the archive.', 'salvocofre' ) );
 	}
 
 	if ( $add_errors > 0 ) {
 		return new WP_Error(
-			'failsafe_zip_partial',
+			'salvocofre_zip_partial',
 			sprintf(
 				/* translators: %d: number of files that could not be added. */
-				__( 'The archive was written but %d files could not be added.', 'failsafe-backup' ),
+				__( 'The archive was written but %d files could not be added.', 'salvocofre' ),
 				$add_errors
 			)
 		);
@@ -449,7 +449,7 @@ function failsafe_create_zip( $sql_path, $zip_path ) {
  * @param string[] $excluded Directories to skip.
  * @return bool
  */
-function failsafe_path_is_excluded( $pathname, array $excluded ) {
+function salvocofre_path_is_excluded( $pathname, array $excluded ) {
 	$real = realpath( $pathname );
 
 	if ( false === $real ) {
@@ -473,9 +473,9 @@ function failsafe_path_is_excluded( $pathname, array $excluded ) {
  * @param string $message Message to log.
  * @return void
  */
-function failsafe_log( $message ) {
+function salvocofre_log( $message ) {
 	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Guarded by WP_DEBUG; this is the plugin's single log sink for admin and cron failures.
-		error_log( 'failsafe: ' . $message );
+		error_log( 'salvocofre: ' . $message );
 	}
 }

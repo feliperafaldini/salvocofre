@@ -2,27 +2,27 @@
 /**
  * Streaming SQL dump writer.
  *
- * failsafe_build_sql_dump() keeps the whole dump in a string, so the plugin
+ * salvocofre_build_sql_dump() keeps the whole dump in a string, so the plugin
  * can only back up a database that fits twice in memory_limit. The writer
  * below produces the very same SQL text straight to disk: tables are walked
  * in chunks and only the current chunk plus one batch of INSERT statements is
  * held in memory, so memory use no longer grows with the table size.
  *
- * @package Failsafe
+ * @package Salvocofre
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! defined( 'FAILSAFE_DUMP_CHUNK_SIZE' ) ) {
+if ( ! defined( 'SALVOCOFRE_DUMP_CHUNK_SIZE' ) ) {
 	// Rows read per query while walking a table.
-	define( 'FAILSAFE_DUMP_CHUNK_SIZE', 500 );
+	define( 'SALVOCOFRE_DUMP_CHUNK_SIZE', 500 );
 }
 
-if ( ! defined( 'FAILSAFE_DUMP_INSERT_BATCH' ) ) {
+if ( ! defined( 'SALVOCOFRE_DUMP_INSERT_BATCH' ) ) {
 	// INSERT statements kept in memory before they are written to disk.
-	define( 'FAILSAFE_DUMP_INSERT_BATCH', 100 );
+	define( 'SALVOCOFRE_DUMP_INSERT_BATCH', 100 );
 }
 
 /**
@@ -30,8 +30,8 @@ if ( ! defined( 'FAILSAFE_DUMP_INSERT_BATCH' ) ) {
  *
  * @return int
  */
-function failsafe_dump_chunk_size(): int {
-	return max( 1, (int) apply_filters( 'failsafe_dump_chunk_size', FAILSAFE_DUMP_CHUNK_SIZE ) );
+function salvocofre_dump_chunk_size(): int {
+	return max( 1, (int) apply_filters( 'salvocofre_dump_chunk_size', SALVOCOFRE_DUMP_CHUNK_SIZE ) );
 }
 
 /**
@@ -39,25 +39,25 @@ function failsafe_dump_chunk_size(): int {
  *
  * @return int
  */
-function failsafe_dump_insert_batch(): int {
-	return max( 1, (int) apply_filters( 'failsafe_dump_insert_batch', FAILSAFE_DUMP_INSERT_BATCH ) );
+function salvocofre_dump_insert_batch(): int {
+	return max( 1, (int) apply_filters( 'salvocofre_dump_insert_batch', SALVOCOFRE_DUMP_INSERT_BATCH ) );
 }
 
 /**
  * Writes a portable SQL dump of every table to a file.
  *
- * The output is byte for byte the text failsafe_build_sql_dump() returns,
+ * The output is byte for byte the text salvocofre_build_sql_dump() returns,
  * except for the "-- Date:" line, which changes between runs.
  *
  * @param string $path Absolute path of the file to write.
  * @return int|WP_Error Bytes written on success, WP_Error on failure.
  */
-function failsafe_write_sql_dump( string $path ): int|WP_Error {
+function salvocofre_write_sql_dump( string $path ): int|WP_Error {
 	if ( '' === $path ) {
-		return new WP_Error( 'failsafe_dump_path_empty', __( 'No file was given for the SQL dump.', 'failsafe-backup' ) );
+		return new WP_Error( 'salvocofre_dump_path_empty', __( 'No file was given for the SQL dump.', 'salvocofre' ) );
 	}
 
-	$tables = failsafe_dump_tables();
+	$tables = salvocofre_dump_tables();
 
 	if ( is_wp_error( $tables ) ) {
 		return $tables;
@@ -68,16 +68,16 @@ function failsafe_write_sql_dump( string $path ): int|WP_Error {
 
 	if ( false === $handle ) {
 		return new WP_Error(
-			'failsafe_dump_open_failed',
+			'salvocofre_dump_open_failed',
 			sprintf(
 				/* translators: %s: file path. */
-				__( 'Could not open %s for writing.', 'failsafe-backup' ),
+				__( 'Could not open %s for writing.', 'salvocofre' ),
 				$path
 			)
 		);
 	}
 
-	$bytes = failsafe_dump_write_body( $handle, $tables, $path );
+	$bytes = salvocofre_dump_write_body( $handle, $tables, $path );
 	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- the handle was opened here for a streamed write; WP_Filesystem has no appendable handle.
 	$saved = fclose( $handle );
 
@@ -92,10 +92,10 @@ function failsafe_write_sql_dump( string $path ): int|WP_Error {
 		wp_delete_file( $path );
 
 		return new WP_Error(
-			'failsafe_dump_close_failed',
+			'salvocofre_dump_close_failed',
 			sprintf(
 				/* translators: %s: file path. */
-				__( 'Could not finish writing %s.', 'failsafe-backup' ),
+				__( 'Could not finish writing %s.', 'salvocofre' ),
 				$path
 			)
 		);
@@ -109,13 +109,13 @@ function failsafe_write_sql_dump( string $path ): int|WP_Error {
  *
  * @return string
  */
-function failsafe_dump_header(): string {
+function salvocofre_dump_header(): string {
 	global $wpdb;
 
 	$charset = preg_replace( '/[^A-Za-z0-9_]/', '', (string) $wpdb->charset );
 	$collate = preg_replace( '/[^A-Za-z0-9_]/', '', (string) $wpdb->collate );
 
-	$header  = "-- Failsafe Backup SQL dump\n";
+	$header  = "-- Salvocofre Backup SQL dump\n";
 	$header .= '-- Site: ' . home_url() . "\n";
 	$header .= '-- Date: ' . gmdate( 'c' ) . "\n\n";
 	$header .= "SET SESSION sql_mode = '';\n";
@@ -136,7 +136,7 @@ function failsafe_dump_header(): string {
  *
  * @return string
  */
-function failsafe_dump_footer(): string {
+function salvocofre_dump_footer(): string {
 	return "COMMIT;\nSET FOREIGN_KEY_CHECKS = 1;\n";
 }
 
@@ -145,7 +145,7 @@ function failsafe_dump_footer(): string {
  *
  * @return string[]|WP_Error
  */
-function failsafe_dump_tables() {
+function salvocofre_dump_tables() {
 	global $wpdb;
 
 	$wpdb->last_error = '';
@@ -155,11 +155,11 @@ function failsafe_dump_tables() {
 	$tables = $wpdb->get_col( 'SHOW TABLES' );
 
 	if ( $wpdb->last_error ) {
-		return new WP_Error( 'failsafe_tables_failed', $wpdb->last_error );
+		return new WP_Error( 'salvocofre_tables_failed', $wpdb->last_error );
 	}
 
 	if ( empty( $tables ) ) {
-		return new WP_Error( 'failsafe_no_tables', __( 'No tables found in the database.', 'failsafe-backup' ) );
+		return new WP_Error( 'salvocofre_no_tables', __( 'No tables found in the database.', 'salvocofre' ) );
 	}
 
 	/**
@@ -167,10 +167,10 @@ function failsafe_dump_tables() {
 	 *
 	 * @param string[] $tables Table names.
 	 */
-	$tables = array_values( (array) apply_filters( 'failsafe_dump_tables', $tables ) );
+	$tables = array_values( (array) apply_filters( 'salvocofre_dump_tables', $tables ) );
 
 	if ( empty( $tables ) ) {
-		return new WP_Error( 'failsafe_no_tables', __( 'No tables left to dump.', 'failsafe-backup' ) );
+		return new WP_Error( 'salvocofre_no_tables', __( 'No tables left to dump.', 'salvocofre' ) );
 	}
 
 	return $tables;
@@ -184,17 +184,17 @@ function failsafe_dump_tables() {
  * @param string   $path   Path used in error messages.
  * @return int|WP_Error Bytes written.
  */
-function failsafe_dump_write_body( $handle, array $tables, string $path ) {
+function salvocofre_dump_write_body( $handle, array $tables, string $path ) {
 	global $wpdb;
 
-	$total = failsafe_dump_write( $handle, failsafe_dump_header(), $path );
+	$total = salvocofre_dump_write( $handle, salvocofre_dump_header(), $path );
 
 	if ( is_wp_error( $total ) ) {
 		return $total;
 	}
 
-	$chunk_size = failsafe_dump_chunk_size();
-	$batch_size = failsafe_dump_insert_batch();
+	$chunk_size = salvocofre_dump_chunk_size();
+	$batch_size = salvocofre_dump_insert_batch();
 
 	foreach ( $tables as $table ) {
 		$wpdb->last_error = '';
@@ -204,7 +204,7 @@ function failsafe_dump_write_body( $handle, array $tables, string $path ) {
 		$create = $wpdb->get_row( $wpdb->prepare( 'SHOW CREATE TABLE %i', $table ), ARRAY_A );
 
 		if ( $wpdb->last_error ) {
-			return new WP_Error( 'failsafe_create_table_failed', $table . ': ' . $wpdb->last_error );
+			return new WP_Error( 'salvocofre_create_table_failed', $table . ': ' . $wpdb->last_error );
 		}
 
 		if ( empty( $create ) || empty( $create['Create Table'] ) ) {
@@ -212,7 +212,7 @@ function failsafe_dump_write_body( $handle, array $tables, string $path ) {
 			continue;
 		}
 
-		$written = failsafe_dump_write(
+		$written = salvocofre_dump_write(
 			$handle,
 			$wpdb->prepare( 'DROP TABLE IF EXISTS %i', $table ) . ";\n" . $create['Create Table'] . ";\n\n",
 			$path
@@ -224,13 +224,13 @@ function failsafe_dump_write_body( $handle, array $tables, string $path ) {
 
 		$total += $written;
 
-		$primary_key = failsafe_dump_primary_key( $table );
+		$primary_key = salvocofre_dump_primary_key( $table );
 
 		if ( is_wp_error( $primary_key ) ) {
 			return $primary_key;
 		}
 
-		$written = failsafe_dump_rows( $handle, $table, $primary_key, $chunk_size, $batch_size, $path );
+		$written = salvocofre_dump_rows( $handle, $table, $primary_key, $chunk_size, $batch_size, $path );
 
 		if ( is_wp_error( $written ) ) {
 			return $written;
@@ -239,7 +239,7 @@ function failsafe_dump_write_body( $handle, array $tables, string $path ) {
 		$total += $written;
 	}
 
-	$written = failsafe_dump_write( $handle, failsafe_dump_footer(), $path );
+	$written = salvocofre_dump_write( $handle, salvocofre_dump_footer(), $path );
 
 	if ( is_wp_error( $written ) ) {
 		return $written;
@@ -258,7 +258,7 @@ function failsafe_dump_write_body( $handle, array $tables, string $path ) {
  * @param string $table Table name.
  * @return string[]|WP_Error Column names in key order, empty when paging by offset.
  */
-function failsafe_dump_primary_key( string $table ) {
+function salvocofre_dump_primary_key( string $table ) {
 	global $wpdb;
 
 	$wpdb->last_error = '';
@@ -267,7 +267,7 @@ function failsafe_dump_primary_key( string $table ) {
 	$keys = $wpdb->get_results( $wpdb->prepare( 'SHOW KEYS FROM %i WHERE Key_name = %s', $table, 'PRIMARY' ), ARRAY_A );
 
 	if ( $wpdb->last_error ) {
-		return new WP_Error( 'failsafe_dump_keys_failed', $table . ': ' . $wpdb->last_error );
+		return new WP_Error( 'salvocofre_dump_keys_failed', $table . ': ' . $wpdb->last_error );
 	}
 
 	if ( empty( $keys ) ) {
@@ -304,7 +304,7 @@ function failsafe_dump_primary_key( string $table ) {
  * @param int        $limit  Maximum number of rows to read.
  * @return array|WP_Error
  */
-function failsafe_dump_chunk( string $table, array $key, $last, int $offset, int $limit ) {
+function salvocofre_dump_chunk( string $table, array $key, $last, int $offset, int $limit ) {
 	global $wpdb;
 
 	$limit = max( 1, $limit );
@@ -321,8 +321,8 @@ function failsafe_dump_chunk( string $table, array $key, $last, int $offset, int
 			$right = array();
 
 			foreach ( array_keys( $key ) as $position ) {
-				// Values come from the table itself; failsafe_sql_value() quotes them the same way the dump does.
-				$right[] = failsafe_sql_value( $last[ $position ] );
+				// Values come from the table itself; salvocofre_sql_value() quotes them the same way the dump does.
+				$right[] = salvocofre_sql_value( $last[ $position ] );
 			}
 
 			if ( 1 === count( $key ) ) {
@@ -339,11 +339,11 @@ function failsafe_dump_chunk( string $table, array $key, $last, int $offset, int
 
 	$wpdb->last_error = '';
 
-	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- every identifier goes through %i and every paging value through failsafe_sql_value(); a key range cannot be written as one prepared template.
+	// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- every identifier goes through %i and every paging value through salvocofre_sql_value(); a key range cannot be written as one prepared template.
 	$rows = $wpdb->get_results( $sql, ARRAY_A );
 
 	if ( $wpdb->last_error ) {
-		return new WP_Error( 'failsafe_dump_select_failed', $table . ': ' . $wpdb->last_error );
+		return new WP_Error( 'salvocofre_dump_select_failed', $table . ': ' . $wpdb->last_error );
 	}
 
 	return is_array( $rows ) ? $rows : array();
@@ -360,7 +360,7 @@ function failsafe_dump_chunk( string $table, array $key, $last, int $offset, int
  * @param string   $path       Path used in error messages.
  * @return int|WP_Error Bytes written for this table.
  */
-function failsafe_dump_rows( $handle, string $table, array $key, int $chunk_size, int $batch_size, string $path ) {
+function salvocofre_dump_rows( $handle, string $table, array $key, int $chunk_size, int $batch_size, string $path ) {
 	global $wpdb;
 
 	$table_name  = $wpdb->prepare( '%i', $table );
@@ -372,7 +372,7 @@ function failsafe_dump_rows( $handle, string $table, array $key, int $chunk_size
 	$total       = 0;
 
 	while ( true ) {
-		$rows = failsafe_dump_chunk( $table, $key, $last, $offset, $chunk_size );
+		$rows = salvocofre_dump_chunk( $table, $key, $last, $offset, $chunk_size );
 
 		if ( is_wp_error( $rows ) ) {
 			return $rows;
@@ -397,7 +397,7 @@ function failsafe_dump_rows( $handle, string $table, array $key, int $chunk_size
 			$values = array();
 
 			foreach ( $columns as $column ) {
-				$values[] = failsafe_sql_value( $row[ $column ] );
+				$values[] = salvocofre_sql_value( $row[ $column ] );
 			}
 
 			$batch[] = 'INSERT INTO ' . $table_name . ' (' . $sql_columns . ') VALUES (' . implode( ', ', $values ) . ");\n";
@@ -406,7 +406,7 @@ function failsafe_dump_rows( $handle, string $table, array $key, int $chunk_size
 				continue;
 			}
 
-			$written = failsafe_dump_write( $handle, implode( '', $batch ), $path );
+			$written = salvocofre_dump_write( $handle, implode( '', $batch ), $path );
 
 			if ( is_wp_error( $written ) ) {
 				return $written;
@@ -431,10 +431,10 @@ function failsafe_dump_rows( $handle, string $table, array $key, int $chunk_size
 			if ( $next === $last ) {
 				// A key range that does not move would loop forever and fill the disk.
 				return new WP_Error(
-					'failsafe_dump_paging_stalled',
+					'salvocofre_dump_paging_stalled',
 					sprintf(
 						/* translators: %s: table name. */
-						__( 'Could not page through %s: the primary key did not advance.', 'failsafe-backup' ),
+						__( 'Could not page through %s: the primary key did not advance.', 'salvocofre' ),
 						$table
 					)
 				);
@@ -447,7 +447,7 @@ function failsafe_dump_rows( $handle, string $table, array $key, int $chunk_size
 	}
 
 	if ( ! empty( $batch ) ) {
-		$written = failsafe_dump_write( $handle, implode( '', $batch ), $path );
+		$written = salvocofre_dump_write( $handle, implode( '', $batch ), $path );
 
 		if ( is_wp_error( $written ) ) {
 			return $written;
@@ -461,7 +461,7 @@ function failsafe_dump_rows( $handle, string $table, array $key, int $chunk_size
 	}
 
 	// The blank line that separates two tables in the dump.
-	$written = failsafe_dump_write( $handle, "\n", $path );
+	$written = salvocofre_dump_write( $handle, "\n", $path );
 
 	if ( is_wp_error( $written ) ) {
 		return $written;
@@ -478,7 +478,7 @@ function failsafe_dump_rows( $handle, string $table, array $key, int $chunk_size
  * @param string   $path   Path used in error messages.
  * @return int|WP_Error Bytes written.
  */
-function failsafe_dump_write( $handle, string $data, string $path ) {
+function salvocofre_dump_write( $handle, string $data, string $path ) {
 	$length = strlen( $data );
 	$offset = 0;
 
@@ -490,10 +490,10 @@ function failsafe_dump_write( $handle, string $data, string $path ) {
 
 		if ( false === $written || 0 === $written ) {
 			return new WP_Error(
-				'failsafe_dump_write_failed',
+				'salvocofre_dump_write_failed',
 				sprintf(
 					/* translators: %s: file path. */
-					__( 'Could not write to %s.', 'failsafe-backup' ),
+					__( 'Could not write to %s.', 'salvocofre' ),
 					$path
 				)
 			);

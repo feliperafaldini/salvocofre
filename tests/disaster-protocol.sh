@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Failsafe Backup disaster protocol.
+# Salvocofre Backup disaster protocol.
 #
 # Proves end to end that a backup restores the site:
 #   1. creates a marker post;
@@ -22,11 +22,11 @@
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-WP="${WP_CONTAINER:-failsafe-wordpress-1}"
-DB="${DB_CONTAINER:-failsafe-db-1}"
-TESTS_REMOTE="/tmp/failsafe-disaster"
+WP="${WP_CONTAINER:-salvocofre-wordpress-1}"
+DB="${DB_CONTAINER:-salvocofre-db-1}"
+TESTS_REMOTE="/tmp/salvocofre-disaster"
 SITE_URL="${SITE_URL:-http://localhost:8080/}"
-MARKER_TITLE="failsafe disaster $(date -u +%Y%m%d-%H%M%S)"
+MARKER_TITLE="salvocofre disaster $(date -u +%Y%m%d-%H%M%S)"
 POST_ID=''
 BASE=''
 
@@ -56,7 +56,7 @@ cleanup() {
 	docker exec "$WP" rm -rf "$TESTS_REMOTE" >/dev/null 2>&1 || true
 }
 
-printf 'Failsafe disaster protocol\n'
+printf 'Salvocofre disaster protocol\n'
 
 if ! command -v docker >/dev/null 2>&1; then
 	printf '  FAIL docker is not installed or not in PATH.\n'
@@ -109,7 +109,7 @@ step '2. Create the backup'
 if OUTPUT=$(run_helper backup 2>&1); then
 	BASE=$(printf '%s\n' "$OUTPUT" | awk -F= '/^BACKUP_BASE=/ { print $2 }' | tail -n 1)
 
-	if [ -z "$BASE" ] || ! [[ "$BASE" =~ ^failsafe-[0-9]{8}-[0-9]{6}(-[0-9]{1,2})?$ ]]; then
+	if [ -z "$BASE" ] || ! [[ "$BASE" =~ ^salvocofre-[0-9]{8}-[0-9]{6}(-[0-9]{1,2})?$ ]]; then
 		fail 'the helper did not report a valid backup base name.' "$OUTPUT"
 	fi
 

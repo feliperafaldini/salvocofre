@@ -1,27 +1,27 @@
-# Failsafe Backup — regras do projeto
+# Salvocofre Backup — regras do projeto
 
 ## Idioma
 
 - Comunicação com o dono do projeto e documentação interna em **português**.
 - Código em **inglês**: nomes de variáveis, funções, constantes e comentários.
-- Strings de interface do plugin em **inglês**, dentro de `__( '...', 'failsafe-backup' )` — o plugin vai para o diretório do WordPress.org e será traduzido.
+- Strings de interface do plugin em **inglês**, dentro de `__( '...', 'salvocofre' )` — o plugin vai para o diretório do WordPress.org e será traduzido.
 
 ## Padrões de código
 
-- Prefixo `failsafe_` em funções globais; constantes `FAILSAFE_*`.
+- Prefixo `salvocofre_` em funções globais; constantes `SALVOCOFRE_*`.
 - WordPress Coding Standards: tabs, aspas simples sem interpolação, espaços ao redor de parênteses, Yoda conditions.
 - SQL: palavras-chave em maiúsculas; identificador dinâmico via `$wpdb->prepare( '%i', ... )`; valor de texto via `esc_sql()` + aspas escritas à mão; valor binário/não-UTF-8 como literal hexadecimal `X'...'`.
-- Saída sempre escapada; entrada por nonce + capability (`failsafe_backup_capability()`, filtrável).
+- Saída sempre escapada; entrada por nonce + capability (`salvocofre_backup_capability()`, filtrável).
 - Toda função que pode falhar devolve `WP_Error` em vez de `exit`/`false` silencioso.
-- Mensagens de erro sempre em `__()` com o text domain `failsafe-backup` (igual ao slug).
+- Mensagens de erro sempre em `__()` com o text domain `salvocofre` (igual ao slug).
 
 ## Arquitetura
 
-- `src/failsafe.php` — apenas header, constantes e o mapa de `require_once`.
+- `src/salvocofre.php` — apenas header, constantes e o mapa de `require_once`.
 - `src/admin/setup.php` — cria e protege o diretório de backups (ativação + `admin_init`).
 - `src/admin/dashboard.php` — widget do painel, formulário e aviso de resultado.
-- `src/admin/actions.php` — handler do `admin_post_*` e as funções de trabalho (`failsafe_create_backup`, `failsafe_build_sql_dump`, `failsafe_sql_value`, `failsafe_create_zip`, `failsafe_path_is_excluded`, `failsafe_log`).
-- `src/uninstall.php` — limpa options; só apaga os backups se `failsafe_delete_backups_on_uninstall` estiver ligado.
+- `src/admin/actions.php` — handler do `admin_post_*` e as funções de trabalho (`salvocofre_create_backup`, `salvocofre_build_sql_dump`, `salvocofre_sql_value`, `salvocofre_create_zip`, `salvocofre_path_is_excluded`, `salvocofre_log`).
+- `src/uninstall.php` — limpa options; só apaga os backups se `salvocofre_delete_backups_on_uninstall` estiver ligado.
 - Regra: o handler só valida, chama e redireciona; a lógica fica em funções testáveis.
 
 ## Contrato do dump
@@ -40,7 +40,7 @@
 ## Ambiente local
 
 - `docker compose up -d`; site em http://localhost:8080.
-- Containers: `failsafe-wordpress-1`, `failsafe-db-1`.
+- Containers: `salvocofre-wordpress-1`, `salvocofre-db-1`.
 - Credenciais apenas no `docker-compose.yml`; o script de teste as lê de lá. Nunca em código, teste ou log.
 - `debug.log` em `/var/www/html/wp-content/debug.log` é o primeiro lugar a olhar quando algo falha.
 

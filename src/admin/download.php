@@ -5,26 +5,26 @@
  * Only the base name and the file type come from the request. The path is
  * always assembled here, after validation, and never read from user input.
  *
- * @package Failsafe
+ * @package Salvocofre
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-add_action( 'admin_post_failsafe_download_backup', 'failsafe_handle_download_backup' );
+add_action( 'admin_post_salvocofre_download_backup', 'salvocofre_handle_download_backup' );
 
 /**
  * Handles a backup download request.
  *
  * @return void
  */
-function failsafe_handle_download_backup() {
-	if ( ! current_user_can( failsafe_backup_capability() ) ) {
+function salvocofre_handle_download_backup() {
+	if ( ! current_user_can( salvocofre_backup_capability() ) ) {
 		wp_die( '', 403 );
 	}
 
-	check_admin_referer( 'failsafe_download_backup' );
+	check_admin_referer( 'salvocofre_download_backup' );
 
 	$base = isset( $_GET['backup'] ) ? sanitize_key( wp_unslash( $_GET['backup'] ) ) : '';
 	$type = isset( $_GET['tipo'] ) ? sanitize_key( wp_unslash( $_GET['tipo'] ) ) : '';
@@ -33,7 +33,7 @@ function failsafe_handle_download_backup() {
 		wp_die( '', 400 );
 	}
 
-	$path = failsafe_backup_path( $base, $type );
+	$path = salvocofre_backup_path( $base, $type );
 
 	if ( is_wp_error( $path ) ) {
 		wp_die( '', 400 );
@@ -48,7 +48,7 @@ function failsafe_handle_download_backup() {
 	}
 
 	$real     = realpath( $path );
-	$real_dir = realpath( failsafe_backup_dir() );
+	$real_dir = realpath( salvocofre_backup_dir() );
 
 	if ( false === $real || false === $real_dir || ! str_starts_with( $real, $real_dir . DIRECTORY_SEPARATOR ) ) {
 		wp_die( '', 403 );

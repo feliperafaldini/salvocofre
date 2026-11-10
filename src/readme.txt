@@ -1,10 +1,10 @@
-=== Failsafe Backup ===
+=== Salvocofre Backup ===
 Contributors: feliperafaldini
 Tags: backup, database, restore, schedule, zip
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 8.0
-Stable tag: 0.2.0
+Stable tag: 0.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,12 +12,12 @@ Creates timestamped ZIP backups of the database and site files, restores the dat
 
 == Description ==
 
-Failsafe Backup creates a ZIP archive with the site files and a SQL dump of the database, keeps the previous backups under a retention limit, and can restore the database from any complete archive. It works on a single WordPress installation; multisite is not supported.
+Salvocofre Backup creates a ZIP archive with the site files and a SQL dump of the database, keeps the previous backups under a retention limit, and can restore the database from any complete archive. It works on a single WordPress installation; multisite is not supported.
 
-Each backup is a set of two files in `wp-content/failsafe-backups/`:
+Each backup is a set of two files in `wp-content/salvocofre-backups/`:
 
-* `failsafe-YYYYMMDD-HHMMSS.zip` — the SQL dump plus every readable file in the WordPress installation.
-* `failsafe-YYYYMMDD-HHMMSS.sql` — the same database dump on its own.
+* `salvocofre-YYYYMMDD-HHMMSS.zip` — the SQL dump plus every readable file in the WordPress installation.
+* `salvocofre-YYYYMMDD-HHMMSS.sql` — the same database dump on its own.
 
 Names use the site time zone and are never reused: if two runs start in the same second, the second one gets a `-2` suffix. A new backup never overwrites an older one; old sets are removed only by the retention limit or by hand.
 
@@ -41,7 +41,7 @@ Names use the site time zone and are never reused: if two runs start in the same
 
 **Managing backups**
 
-The top-level **Failsafe** menu opens the **Backups** screen. The table shows the date, the file names, the total size and the actions for every backup set:
+The top-level **Salvocofre** menu opens the **Backups** screen. The table shows the date, the file names, the total size and the actions for every backup set:
 
 * **Download (.zip)** and **Download (.sql)** stream one file through `admin-post.php`; the link carries a nonce and the path is rebuilt from the requested backup name.
 * **Delete** removes both files of the set. It is a POST request with a nonce tied to that set, so a stale link cannot delete another backup.
@@ -51,7 +51,7 @@ The dashboard widget shows the latest backup, the number of sets and the total s
 
 **Restoring the database**
 
-**Tools > Failsafe Restore** restores the database from the `.zip` archive of a backup set. The screen shows a restore form only for sets whose ZIP exists and is not empty.
+**Tools > Salvocofre Restore** restores the database from the `.zip` archive of a backup set. The screen shows a restore form only for sets whose ZIP exists and is not empty.
 
 1. Type the exact backup name to confirm the operation.
 2. The plugin creates a full safety backup first. If that backup fails, the restore is aborted.
@@ -65,7 +65,7 @@ The restore screen cannot restore a `.sql` file on its own, and it does not rest
 
 **Automatic backups**
 
-**Settings > Failsafe Backup** controls scheduled backups:
+**Settings > Salvocofre Backup** controls scheduled backups:
 
 * The schedule is enabled by default with a daily frequency after activation.
 * Frequencies: hourly, twice daily, daily and weekly.
@@ -75,7 +75,7 @@ The restore screen cannot restore a `.sql` file on its own, and it does not rest
 
 WP-Cron only runs when the site receives traffic. A quiet site can therefore run an automatic backup late. To keep the schedule on time, disable WP-Cron and call `wp-cron.php` from a system cron job.
 
-The status e-mail is sent for manual backups started from the admin screens: a failure is reported whenever the administrator address is valid, and a success is reported only when the `failsafe_email_on_success` option is enabled (there is no setting for it in the admin screens yet). The message goes to the site administrator address and can be redirected with the `failsafe_status_email_recipient` filter. A failed scheduled run is recorded in the settings status and in the site log, but it does not send an e-mail.
+The status e-mail is sent for manual backups started from the admin screens: a failure is reported whenever the administrator address is valid, and a success is reported only when the `salvocofre_email_on_success` option is enabled (there is no setting for it in the admin screens yet). The message goes to the site administrator address and can be redirected with the `salvocofre_status_email_recipient` filter. A failed scheduled run is recorded in the settings status and in the site log, but it does not send an e-mail.
 
 **Retention**
 
@@ -93,25 +93,25 @@ A backup that would exceed a known limit is stopped with an explanatory error be
 
 **The backup directory**
 
-The plugin creates `wp-content/failsafe-backups/` on activation and on every admin request if it is missing. The directory receives an `.htaccess` file that denies direct access and an empty `index.php`. Define `FAILSAFE_BACKUP_DIR` in `wp-config.php` before the plugin loads to use another absolute path.
+The plugin creates `wp-content/salvocofre-backups/` on activation and on every admin request if it is missing. The directory receives an `.htaccess` file that denies direct access and an empty `index.php`. Define `SALVOCOFRE_BACKUP_DIR` in `wp-config.php` before the plugin loads to use another absolute path.
 
 Downloads do not rely on direct access to that directory: they are served by `admin-post.php` after the capability and nonce checks.
 
 **Who can run a backup**
 
-Users with the `manage_options` capability by default. The capability can be changed with the `failsafe_backup_capability` filter.
+Users with the `manage_options` capability by default. The capability can be changed with the `salvocofre_backup_capability` filter.
 
 **Uninstall**
 
-Deactivation removes the scheduled event and any run lock; the backups are left untouched. Uninstall removes every plugin option and the run lock, so nothing is left in the database. The backup directory is kept unless the site owner has enabled the `failsafe_delete_backups_on_uninstall` option; when enabled, the directory is removed as well.
+Deactivation removes the scheduled event and any run lock; the backups are left untouched. Uninstall removes every plugin option and the run lock, so nothing is left in the database. The backup directory is kept unless the site owner has enabled the `salvocofre_delete_backups_on_uninstall` option; when enabled, the directory is removed as well.
 
 == Installation ==
 
-1. Upload the `failsafe` directory to `/wp-content/plugins/`, or install `failsafe-<version>.zip` through **Plugins > Add New > Upload Plugin**. The `failsafe.zip` archive, with the plugin files at its root, is meant for SVN trunk and is not the file the upload screen expects.
-2. Activate the plugin on the **Plugins** screen. Activation creates and protects `wp-content/failsafe-backups/` and schedules the first automatic backup.
-3. Open the **Dashboard** or the **Failsafe** menu to create a backup. The **Backups** screen lists, downloads and deletes backup sets.
-4. Open **Settings > Failsafe Backup** to enable or disable automatic backups, choose the frequency and set the retention limit.
-5. Use **Tools > Failsafe Restore** to restore the database from a complete `.zip` backup.
+1. Upload the `salvocofre` directory to `/wp-content/plugins/`, or install `salvocofre-<version>.zip` through **Plugins > Add New > Upload Plugin**. The `salvocofre.zip` archive, with the plugin files at its root, is meant for SVN trunk and is not the file the upload screen expects.
+2. Activate the plugin on the **Plugins** screen. Activation creates and protects `wp-content/salvocofre-backups/` and schedules the first automatic backup.
+3. Open the **Dashboard** or the **Salvocofre** menu to create a backup. The **Backups** screen lists, downloads and deletes backup sets.
+4. Open **Settings > Salvocofre Backup** to enable or disable automatic backups, choose the frequency and set the retention limit.
+5. Use **Tools > Salvocofre Restore** to restore the database from a complete `.zip` backup.
 
 The web server user must be able to write to `wp-content/`. For backups, the database user must be allowed to run `SHOW TABLES`, `SHOW CREATE TABLE`, `SELECT` and to read `information_schema`. For a restore, it also needs permission to run `DROP TABLE`, `CREATE TABLE` and `INSERT`, because the dump recreates the tables it contains.
 
@@ -119,7 +119,7 @@ The web server user must be able to write to `wp-content/`. For backups, the dat
 
 = Where are the backup files stored? =
 
-In `wp-content/failsafe-backups/` by default. The directory is created by the plugin and protected with `.htaccess` on Apache. Define `FAILSAFE_BACKUP_DIR` in `wp-config.php` to use another absolute path.
+In `wp-content/salvocofre-backups/` by default. The directory is created by the plugin and protected with `.htaccess` on Apache. Define `SALVOCOFRE_BACKUP_DIR` in `wp-config.php` to use another absolute path.
 
 = Does the plugin send any data outside my site? =
 
@@ -127,7 +127,7 @@ No. It makes no HTTP requests, sends no telemetry and does not contact WordPress
 
 = How many backups are kept? =
 
-Five by default. Change **Backups to keep** under **Settings > Failsafe Backup**: 0 keeps every backup and the maximum is 50. The limit is applied after each successful backup.
+Five by default. Change **Backups to keep** under **Settings > Salvocofre Backup**: 0 keeps every backup and the maximum is 50. The limit is applied after each successful backup.
 
 = Are old backups overwritten? =
 
@@ -135,7 +135,7 @@ No. Every run creates a new timestamped set. Sets beyond the retention limit are
 
 = Can visitors download the backup? =
 
-On Apache the `.htaccess` file denies all requests to the directory. On nginx `.htaccess` is ignored: add a server rule such as `location ~* /wp-content/failsafe-backups/ { deny all; }`, or define `FAILSAFE_BACKUP_DIR` in `wp-config.php` to a directory outside the web root. The admin download links require a logged-in user with the backup capability and a valid nonce.
+On Apache the `.htaccess` file denies all requests to the directory. On nginx `.htaccess` is ignored: add a server rule such as `location ~* /wp-content/salvocofre-backups/ { deny all; }`, or define `SALVOCOFRE_BACKUP_DIR` in `wp-config.php` to a directory outside the web root. The admin download links require a logged-in user with the backup capability and a valid nonce.
 
 = Does the plugin work on multisite? =
 
@@ -159,7 +159,7 @@ The usual causes are a missing `ZipArchive` extension, a database error, a full 
 
 = Why did the scheduled backup not run? =
 
-WP-Cron only runs when the site receives a request. A quiet site can be late. Check the next due time under **Settings > Failsafe Backup**; if `DISABLE_WP_CRON` is set, call `wp-cron.php` from a system cron job.
+WP-Cron only runs when the site receives a request. A quiet site can be late. Check the next due time under **Settings > Salvocofre Backup**; if `DISABLE_WP_CRON` is set, call `wp-cron.php` from a system cron job.
 
 = Does the archive include uploads and other plugins? =
 
@@ -167,23 +167,23 @@ Yes. Every readable file under the WordPress installation is added, except the b
 
 = Are backups from version 0.1.0 listed? =
 
-No. Version 0.1.0 used the fixed names `failsafe-backup.sql` and `failsafe-backup.zip`. Those files are not matched by the timestamped names, so they are neither listed nor removed by retention. Download or delete them manually before upgrading if you need them.
+No. Version 0.1.0 used the fixed names `salvocofre.sql` and `salvocofre.zip`. Those files are not matched by the timestamped names, so they are neither listed nor removed by retention. Download or delete them manually before upgrading if you need them.
 
 = Can I change who is allowed to run backups? =
 
-Yes. Use the `failsafe_backup_capability` filter and return another capability, for example `manage_network_options` or a custom capability.
+Yes. Use the `salvocofre_backup_capability` filter and return another capability, for example `manage_network_options` or a custom capability.
 
 = Does uninstalling delete my backups? =
 
-By default, no. Uninstall removes every plugin option and keeps the backup files. Backups are deleted only when the `failsafe_delete_backups_on_uninstall` option is enabled before uninstalling. There is no setting for this option in the admin screens yet.
+By default, no. Uninstall removes every plugin option and keeps the backup files. Backups are deleted only when the `salvocofre_delete_backups_on_uninstall` option is enabled before uninstalling. There is no setting for this option in the admin screens yet.
 
 = Can I extend the plugin? =
 
 Yes. The plugin exposes actions and filters so another plugin can react to a backup or change its behaviour without touching the code.
 
-Actions: `failsafe_backup_started`, `failsafe_backup_completed` (receives the new set), `failsafe_backup_failed` (receives the `WP_Error`), `failsafe_backup_deleted`, `failsafe_retention_deleted` and `failsafe_restore_completed`.
+Actions: `salvocofre_backup_started`, `salvocofre_backup_completed` (receives the new set), `salvocofre_backup_failed` (receives the `WP_Error`), `salvocofre_backup_deleted`, `salvocofre_retention_deleted` and `salvocofre_restore_completed`.
 
-Filters: `failsafe_backup_dir`, `failsafe_backup_capability`, `failsafe_backup_excluded_paths`, `failsafe_dump_tables`, `failsafe_dump_chunk_size`, `failsafe_dump_insert_batch`, `failsafe_required_memory_bytes`, `failsafe_cron_enabled`, `failsafe_cron_frequencies`, `failsafe_cron_lock_timeout`, `failsafe_restore_read_chunk`, `failsafe_restore_max_entries` and `failsafe_status_email_recipient`.
+Filters: `salvocofre_backup_dir`, `salvocofre_backup_capability`, `salvocofre_backup_excluded_paths`, `salvocofre_dump_tables`, `salvocofre_dump_chunk_size`, `salvocofre_dump_insert_batch`, `salvocofre_required_memory_bytes`, `salvocofre_cron_enabled`, `salvocofre_cron_frequencies`, `salvocofre_cron_lock_timeout`, `salvocofre_restore_read_chunk`, `salvocofre_restore_max_entries` and `salvocofre_status_email_recipient`.
 
 Every hook is documented in the source, next to where it fires.
 
@@ -194,8 +194,8 @@ Yes. The ZIP contains `wp-config.php` and the database dump, including password 
 == Screenshots ==
 
 1. The **Backups** screen with the table of sets, the download and delete actions, and the total size on disk.
-2. The **Failsafe Restore** screen under **Tools**, with the warning, the backup table and the typed confirmation field.
-3. The **Failsafe Backup** settings screen with the schedule status, the frequency selector and the retention field.
+2. The **Salvocofre Restore** screen under **Tools**, with the warning, the backup table and the typed confirmation field.
+3. The **Salvocofre Backup** settings screen with the schedule status, the frequency selector and the retention field.
 4. The **Backups** screen right after a run, with the success notice and the new set at the top of the table.
 5. The **Backups** screen after a failed run, with the notice naming the limit that stopped the backup.
 
@@ -206,7 +206,7 @@ These limits are known and accepted for version 0.2.0:
 * **Database size.** Tested with a table of 150,000 rows: a 37.8 MB dump and a 42 MB archive in 8 seconds, with a peak of 42 MB of memory under a 128 MB limit. The dump is written to disk in chunks of 500 rows and the restore reads it back in 64 KB blocks, so memory stays flat. The remaining limit is time, not memory (see below).
 * **Request time.** Manual and scheduled backups run inside a request. A small site takes about 9 seconds; the 150,000-row test took 8 seconds to back up and 19 seconds to restore. Under Apache the default limit is 30 seconds, so a database several times larger than the test will hit the timeout. There is no background processing yet.
 * **WP-Cron depends on traffic.** Automatic backups only start when WordPress receives a request or when `wp-cron.php` is called by a system cron job. A quiet site can run a backup late.
-* **Apache dependency.** Directory protection relies on `.htaccess`. On nginx or another server that ignores `.htaccess`, you must add your own rule or move the directory outside the web root with `FAILSAFE_BACKUP_DIR`.
+* **Apache dependency.** Directory protection relies on `.htaccess`. On nginx or another server that ignores `.htaccess`, you must add your own rule or move the directory outside the web root with `SALVOCOFRE_BACKUP_DIR`.
 * **Multisite.** Not supported. See the FAQ above.
 * **Restore scope.** Only the database is restored. The site files in the archive are not written to the installation. A restore that fails halfway can leave the database partially restored.
 * **Restore input.** Only backups with a non-empty `.zip` archive can be restored from the screen. A `.sql` file on its own cannot be restored there, and extraction needs a temporary directory outside the web root.
@@ -218,24 +218,29 @@ These limits are known and accepted for version 0.2.0:
 
 == Roadmap ==
 
-Multisite support, restoring site files, background processing for large sites and dumping database objects such as views and triggers are not part of version 0.2.0. No release date is promised.
+Multisite support, restoring site files, background processing for large sites and dumping database objects such as views and triggers are not part of version 0.2.1. No release date is promised.
 
 == Changelog ==
 
+= 0.2.1 =
+
+* Renamed the plugin to Salvocofre Backup; the text domain is now `salvocofre`.
+* No functional changes.
+
 = 0.2.0 =
 
-* Timestamped backup sets (`failsafe-YYYYMMDD-HHMMSS`) replace the fixed file names of 0.1.0; older backups are no longer overwritten.
-* New top-level **Failsafe** screen that lists date, files and size, downloads the `.zip` or `.sql` file and deletes both files of a set.
+* Timestamped backup sets (`salvocofre-YYYYMMDD-HHMMSS`) replace the fixed file names of 0.1.0; older backups are no longer overwritten.
+* New top-level **Salvocofre** screen that lists date, files and size, downloads the `.zip` or `.sql` file and deletes both files of a set.
 * Download through `admin-post.php` with a nonce and a path rebuilt from the validated backup name.
 * Delete through a POST request with a nonce tied to the backup set.
 * Dashboard widget with the latest backup, the number of sets and the total size on disk.
 * Retention limit for complete sets, default 5 (0 keeps every backup, maximum 50).
 * Atomic SQL write: the dump is written to a `.part` file and renamed into place; a failed archive is removed.
-* Database restore under **Tools > Failsafe Restore**, with typed confirmation, a full safety backup before the restore, archive entry validation and a notice that site files are not changed.
+* Database restore under **Tools > Salvocofre Restore**, with typed confirmation, a full safety backup before the restore, archive entry validation and a notice that site files are not changed.
 * Scheduled backups (hourly, twice daily, daily and weekly) with a run lock, stale-lock takeover, and last-run and last-result status.
 * Settings screen for automatic backups, frequency and retention.
 * Pre-flight checks for memory, disk space and a time estimate (about 5 seconds plus 1 second per 8 MB of database and files) before the dump starts.
-* Status e-mail for manual runs: failures are reported when the administrator address is valid, and successful runs are reported only with `failsafe_email_on_success`.
+* Status e-mail for manual runs: failures are reported when the administrator address is valid, and successful runs are reported only with `salvocofre_email_on_success`.
 * Requires PHP 8.0, matching the plugin header.
 
 = 0.1.0 =
@@ -250,6 +255,10 @@ Multisite support, restoring site files, background processing for large sites a
 
 == Upgrade Notice ==
 
+= 0.2.1 =
+
+This release renames the plugin to Salvocofre Backup. Deactivate and reactivate the plugin after updating so the new text domain loads.
+
 = 0.2.0 =
 
-Backups now use timestamped names and can be listed, downloaded, deleted, restored and scheduled. Fixed-name files from 0.1.0 are not listed or removed by the plugin. Automatic daily backups are scheduled after the update unless you disable them under Settings > Failsafe Backup. Requires PHP 8.0.
+Timestamped backup sets, list/download/delete/restore and scheduling. Old fixed-name files are left untouched. Daily backups are scheduled after updating; disable them in Settings > Salvocofre Backup. Requires PHP 8.0.

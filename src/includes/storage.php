@@ -3,18 +3,18 @@
  * Storage layer: backup names, listing, deletion and retention.
  *
  * Every backup is a set of two files sharing a base name:
- *   failsafe-YYYYMMDD-HHMMSS.zip  (site files + the SQL dump)
- *   failsafe-YYYYMMDD-HHMMSS.sql  (database dump on its own)
+ *   salvocofre-YYYYMMDD-HHMMSS.zip  (site files + the SQL dump)
+ *   salvocofre-YYYYMMDD-HHMMSS.sql  (database dump on its own)
  *
- * @package Failsafe
+ * @package Salvocofre
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-if ( ! defined( 'FAILSAFE_RETENTION_DEFAULT' ) ) {
-	define( 'FAILSAFE_RETENTION_DEFAULT', 5 );
+if ( ! defined( 'SALVOCOFRE_RETENTION_DEFAULT' ) ) {
+	define( 'SALVOCOFRE_RETENTION_DEFAULT', 5 );
 }
 
 /**
@@ -22,8 +22,8 @@ if ( ! defined( 'FAILSAFE_RETENTION_DEFAULT' ) ) {
  *
  * @return string
  */
-function failsafe_backup_dir() {
-	return (string) apply_filters( 'failsafe_backup_dir', FAILSAFE_BACKUP_DIR );
+function salvocofre_backup_dir() {
+	return (string) apply_filters( 'salvocofre_backup_dir', SALVOCOFRE_BACKUP_DIR );
 }
 
 /**
@@ -31,7 +31,7 @@ function failsafe_backup_dir() {
  *
  * @return WP_Filesystem_Base|false False when the host requires credentials.
  */
-function failsafe_fs() {
+function salvocofre_fs() {
 	static $filesystem = null;
 
 	if ( null !== $filesystem ) {
@@ -40,7 +40,7 @@ function failsafe_fs() {
 
 	require_once ABSPATH . 'wp-admin/includes/file.php';
 
-	$filesystem = WP_Filesystem( false, failsafe_backup_dir(), true ) ? $GLOBALS['wp_filesystem'] : false;
+	$filesystem = WP_Filesystem( false, salvocofre_backup_dir(), true ) ? $GLOBALS['wp_filesystem'] : false;
 
 	return $filesystem;
 }
@@ -51,12 +51,12 @@ function failsafe_fs() {
  * @param string $name Candidate name.
  * @return bool
  */
-function failsafe_is_valid_backup_name( $name ) {
+function salvocofre_is_valid_backup_name( $name ) {
 	if ( ! is_string( $name ) || strlen( $name ) > 40 ) {
 		return false;
 	}
 
-	return 1 === preg_match( '/^failsafe-[0-9]{8}-[0-9]{6}(-[0-9]{1,2})?$/', $name );
+	return 1 === preg_match( '/^salvocofre-[0-9]{8}-[0-9]{6}(-[0-9]{1,2})?$/', $name );
 }
 
 /**
@@ -66,12 +66,12 @@ function failsafe_is_valid_backup_name( $name ) {
  * @param string $ext  Either "zip" or "sql".
  * @return string|WP_Error
  */
-function failsafe_backup_path( $base, $ext ) {
-	if ( ! failsafe_is_valid_backup_name( $base ) || ! in_array( $ext, array( 'zip', 'sql' ), true ) ) {
-		return new WP_Error( 'failsafe_invalid_backup', __( 'Invalid backup name.', 'failsafe-backup' ) );
+function salvocofre_backup_path( $base, $ext ) {
+	if ( ! salvocofre_is_valid_backup_name( $base ) || ! in_array( $ext, array( 'zip', 'sql' ), true ) ) {
+		return new WP_Error( 'salvocofre_invalid_backup', __( 'Invalid backup name.', 'salvocofre' ) );
 	}
 
-	return failsafe_backup_dir() . '/' . $base . '.' . $ext;
+	return salvocofre_backup_dir() . '/' . $base . '.' . $ext;
 }
 
 /**
@@ -79,9 +79,9 @@ function failsafe_backup_path( $base, $ext ) {
  *
  * @return array<string,array>
  */
-function failsafe_get_backups() {
-	$filesystem = failsafe_fs();
-	$directory  = failsafe_backup_dir();
+function salvocofre_get_backups() {
+	$filesystem = salvocofre_fs();
+	$directory  = salvocofre_backup_dir();
 
 	if ( ! $filesystem || ! $filesystem->is_dir( $directory ) ) {
 		return array();
@@ -97,7 +97,7 @@ function failsafe_get_backups() {
 	}
 
 	foreach ( $entries as $filename => $entry ) {
-		if ( ! preg_match( '/^(failsafe-[0-9]{8}-[0-9]{6}(?:-[0-9]{1,2})?)\.(zip|sql)$/', $filename, $matches ) ) {
+		if ( ! preg_match( '/^(salvocofre-[0-9]{8}-[0-9]{6}(?:-[0-9]{1,2})?)\.(zip|sql)$/', $filename, $matches ) ) {
 			continue;
 		}
 
@@ -147,15 +147,15 @@ function failsafe_get_backups() {
  * @param string $base Backup base name.
  * @return array|WP_Error
  */
-function failsafe_get_backup( $base ) {
-	if ( ! failsafe_is_valid_backup_name( $base ) ) {
-		return new WP_Error( 'failsafe_invalid_backup', __( 'Invalid backup name.', 'failsafe-backup' ) );
+function salvocofre_get_backup( $base ) {
+	if ( ! salvocofre_is_valid_backup_name( $base ) ) {
+		return new WP_Error( 'salvocofre_invalid_backup', __( 'Invalid backup name.', 'salvocofre' ) );
 	}
 
-	$backups = failsafe_get_backups();
+	$backups = salvocofre_get_backups();
 
 	if ( ! isset( $backups[ $base ] ) ) {
-		return new WP_Error( 'failsafe_backup_not_found', __( 'Backup not found.', 'failsafe-backup' ) );
+		return new WP_Error( 'salvocofre_backup_not_found', __( 'Backup not found.', 'salvocofre' ) );
 	}
 
 	return $backups[ $base ];
@@ -167,17 +167,17 @@ function failsafe_get_backup( $base ) {
  * @param string $base Backup base name.
  * @return true|WP_Error
  */
-function failsafe_delete_backup( $base ) {
-	$backup = failsafe_get_backup( $base );
+function salvocofre_delete_backup( $base ) {
+	$backup = salvocofre_get_backup( $base );
 
 	if ( is_wp_error( $backup ) ) {
 		return $backup;
 	}
 
-	$filesystem = failsafe_fs();
+	$filesystem = salvocofre_fs();
 
 	if ( ! $filesystem ) {
-		return new WP_Error( 'failsafe_fs_unavailable', __( 'The filesystem is not writable by WordPress.', 'failsafe-backup' ) );
+		return new WP_Error( 'salvocofre_fs_unavailable', __( 'The filesystem is not writable by WordPress.', 'salvocofre' ) );
 	}
 
 	$failed = array();
@@ -187,7 +187,7 @@ function failsafe_delete_backup( $base ) {
 			continue;
 		}
 
-		$path = failsafe_backup_path( $base, $ext );
+		$path = salvocofre_backup_path( $base, $ext );
 
 		if ( is_wp_error( $path ) || ! $filesystem->delete( $path ) ) {
 			$failed[] = $ext;
@@ -196,10 +196,10 @@ function failsafe_delete_backup( $base ) {
 
 	if ( $failed ) {
 		return new WP_Error(
-			'failsafe_delete_partial',
+			'salvocofre_delete_partial',
 			sprintf(
 				/* translators: %s: comma separated file types. */
-				__( 'Could not delete: %s.', 'failsafe-backup' ),
+				__( 'Could not delete: %s.', 'salvocofre' ),
 				implode( ', ', $failed )
 			)
 		);
@@ -211,7 +211,7 @@ function failsafe_delete_backup( $base ) {
 	 * @param string $base   Backup base name.
 	 * @param array  $backup Files that belonged to the set.
 	 */
-	do_action( 'failsafe_backup_deleted', $base, $backup );
+	do_action( 'salvocofre_backup_deleted', $base, $backup );
 
 	return true;
 }
@@ -221,10 +221,10 @@ function failsafe_delete_backup( $base ) {
  *
  * @return int
  */
-function failsafe_get_retention_count() {
+function salvocofre_get_retention_count() {
 	$count = (int) apply_filters(
-		'failsafe_retention_count',
-		(int) get_option( 'failsafe_retention_count', FAILSAFE_RETENTION_DEFAULT )
+		'salvocofre_retention_count',
+		(int) get_option( 'salvocofre_retention_count', SALVOCOFRE_RETENTION_DEFAULT )
 	);
 
 	if ( $count < 0 ) {
@@ -240,8 +240,8 @@ function failsafe_get_retention_count() {
  * @param string $keep_base Backup created by the current run, never deleted.
  * @return string[] Base names that were deleted.
  */
-function failsafe_apply_retention( $keep_base = '' ) {
-	$limit = failsafe_get_retention_count();
+function salvocofre_apply_retention( $keep_base = '' ) {
+	$limit = salvocofre_get_retention_count();
 
 	if ( 0 === $limit ) {
 		return array();
@@ -250,7 +250,7 @@ function failsafe_apply_retention( $keep_base = '' ) {
 	$deleted = array();
 	$kept    = 0;
 
-	foreach ( failsafe_get_backups() as $base => $backup ) {
+	foreach ( salvocofre_get_backups() as $base => $backup ) {
 		if ( ! $backup['complete'] ) {
 			continue;
 		}
@@ -261,10 +261,10 @@ function failsafe_apply_retention( $keep_base = '' ) {
 			continue;
 		}
 
-		$result = failsafe_delete_backup( $base );
+		$result = salvocofre_delete_backup( $base );
 
 		if ( is_wp_error( $result ) ) {
-			failsafe_log( 'retention: ' . $base . ': ' . $result->get_error_message() );
+			salvocofre_log( 'retention: ' . $base . ': ' . $result->get_error_message() );
 			continue;
 		}
 
@@ -277,7 +277,7 @@ function failsafe_apply_retention( $keep_base = '' ) {
 		 *
 		 * @param string[] $deleted Base names that were removed.
 		 */
-		do_action( 'failsafe_retention_deleted', $deleted );
+		do_action( 'salvocofre_retention_deleted', $deleted );
 	}
 
 	return $deleted;
@@ -288,10 +288,10 @@ function failsafe_apply_retention( $keep_base = '' ) {
  *
  * @return int
  */
-function failsafe_get_backups_total_size() {
+function salvocofre_get_backups_total_size() {
 	$total = 0;
 
-	foreach ( failsafe_get_backups() as $backup ) {
+	foreach ( salvocofre_get_backups() as $backup ) {
 		$total += (int) $backup['size'];
 	}
 
@@ -305,30 +305,30 @@ function failsafe_get_backups_total_size() {
  * @param string $contents File contents.
  * @return int|WP_Error Bytes written.
  */
-function failsafe_write_file_atomic( $path, $contents ) {
+function salvocofre_write_file_atomic( $path, $contents ) {
 	$temp = $path . '.part';
 
 	$bytes = file_put_contents( $temp, $contents );
 
 	if ( false === $bytes ) {
 		return new WP_Error(
-			'failsafe_write_failed',
+			'salvocofre_write_failed',
 			sprintf(
 				/* translators: %s: file path. */
-				__( 'Could not write %s.', 'failsafe-backup' ),
+				__( 'Could not write %s.', 'salvocofre' ),
 				$temp
 			)
 		);
 	}
 
-	$filesystem = failsafe_fs();
+	$filesystem = salvocofre_fs();
 
 	if ( ! $filesystem ) {
 		wp_delete_file( $temp );
 
 		return new WP_Error(
-			'failsafe_fs_unavailable',
-			__( 'The filesystem is not writable by WordPress.', 'failsafe-backup' )
+			'salvocofre_fs_unavailable',
+			__( 'The filesystem is not writable by WordPress.', 'salvocofre' )
 		);
 	}
 
@@ -336,10 +336,10 @@ function failsafe_write_file_atomic( $path, $contents ) {
 		wp_delete_file( $temp );
 
 		return new WP_Error(
-			'failsafe_rename_failed',
+			'salvocofre_rename_failed',
 			sprintf(
 				/* translators: %s: file path. */
-				__( 'Could not move %s into place.', 'failsafe-backup' ),
+				__( 'Could not move %s into place.', 'salvocofre' ),
 				$path
 			)
 		);

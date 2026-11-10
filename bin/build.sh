@@ -2,8 +2,8 @@
 #
 # Builds the release archives from src/, honouring .distignore.
 #
-#   dist/failsafe-backup.zip          files at the root — for SVN trunk/
-#   dist/failsafe-backup-<version>.zip  wrapped in failsafe-backup/ — for "Upload Plugin"
+#   dist/salvocofre.zip          files at the root — for SVN trunk/
+#   dist/salvocofre-<version>.zip  wrapped in salvocofre/ — for "Upload Plugin"
 #
 # Usage: ./bin/build.sh
 #
@@ -12,8 +12,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="$ROOT/src"
 DIST="$ROOT/dist"
-NAME="failsafe-backup"
-VERSION="$(php -r '$s = file_get_contents( $argv[1] ); preg_match( "/Version:\\s*([0-9.]+)/", $s, $m ); echo $m[1] ?? "0.0.0";' "$SRC/failsafe.php")"
+NAME="salvocofre"
+VERSION="$(php -r '$s = file_get_contents( $argv[1] ); preg_match( "/Version:\\s*([0-9.]+)/", $s, $m ); echo $m[1] ?? "0.0.0";' "$SRC/salvocofre.php")"
 
 cd "$SRC"
 

@@ -31,19 +31,19 @@ A ordem abaixo é a que deve ser usada nos arquivos e nas legendas do `src/readm
 
 ### `screenshot-1.png` — lista de backups
 
-Tela **Failsafe > Backups** (`wp-admin/admin.php?page=failsafe-backups`), com o site já contendo pelo menos dois backups completos.
+Tela **Salvocofre > Backups** (`wp-admin/admin.php?page=salvocofre-backups`), com o site já contendo pelo menos dois backups completos.
 
 Deve mostrar:
 
 - O título **Backups** e o botão **Backup now**.
 - A tabela com as colunas **Date**, **Files**, **Size** e **Actions**.
-- Em cada conjunto, os dois nomes reais (`failsafe-YYYYMMDD-HHMMSS.zip` e `failsafe-YYYYMMDD-HHMMSS.sql`), o tamanho e os botões **Download (.zip)**, **Download (.sql)** e **Delete**.
+- Em cada conjunto, os dois nomes reais (`salvocofre-YYYYMMDD-HHMMSS.zip` e `salvocofre-YYYYMMDD-HHMMSS.sql`), o tamanho e os botões **Download (.zip)**, **Download (.sql)** e **Delete**.
 - O rodapé com a quantidade de backups e o total em disco (ex.: “2 backups, 24.3 MB on disk.”).
 - Nenhum aviso de erro e nenhum conjunto marcado como **Incomplete**.
 
 ### `screenshot-2.png` — tela de restaurar
 
-Tela **Ferramentas > Failsafe Restore** (`wp-admin/tools.php?page=failsafe-restore`).
+Tela **Ferramentas > Salvocofre Restore** (`wp-admin/tools.php?page=salvocofre-restore`).
 
 Deve mostrar:
 
@@ -54,7 +54,7 @@ Deve mostrar:
 
 ### `screenshot-3.png` — configurações
 
-Tela **Configurações > Failsafe Backup** (`wp-admin/options-general.php?page=failsafe-settings`).
+Tela **Configurações > Salvocofre Backup** (`wp-admin/options-general.php?page=salvocofre-settings`).
 
 Deve mostrar:
 
@@ -68,7 +68,7 @@ O texto auxiliar do campo de retenção deve aparecer como “How many backup se
 
 ### `screenshot-4.png` — aviso de sucesso
 
-A mesma tela **Failsafe > Backups**, imediatamente depois de clicar em **Backup now**.
+A mesma tela **Salvocofre > Backups**, imediatamente depois de clicar em **Backup now**.
 
 Deve mostrar:
 
@@ -79,7 +79,7 @@ Deve mostrar:
 
 ### `screenshot-5.png` — mensagem de limite excedido
 
-Estado atual (0.2.0): o aviso da checagem prévia chega à tela. `failsafe_handle_run_backup()` redireciona com o código do erro e a página **Backups** traduz os códigos conhecidos em mensagens específicas (`src/admin/backups-page.php`), por exemplo:
+Estado atual (0.2.0): o aviso da checagem prévia chega à tela. `salvocofre_handle_run_backup()` redireciona com o código do erro e a página **Backups** traduz os códigos conhecidos em mensagens específicas (`src/admin/backups-page.php`), por exemplo:
 
 - memória: “This site has about … of database. Dumping it needs about … of memory …, but PHP only allows …”;
 - disco: “The backup directory … needs about … of free space, but only … is available.”;
@@ -112,7 +112,7 @@ Se o `screenshot-5.png` não for publicado, o `readme.txt` deve ficar com quatro
 - [x] `screenshot-1.png` a `screenshot-5.png`, todos 1280 × 720, com o conteúdo descrito acima.
 - [ ] Nomes exatos, tudo em minúsculas.
 - [x] `readme.txt` com a mesma quantidade e ordem de legendas (5).
-- [ ] Arquivos copiados para `~/failsafe-svn/assets/`, nunca para `trunk/`.
+- [ ] Arquivos copiados para `~/salvocofre-svn/assets/`, nunca para `trunk/`.
 - [ ] `svn add`, `svn propset svn:mime-type image/png *.png` e commit separado dos assets.
 
 ## 6. Ícone e banner: desenho e como regerar
@@ -124,7 +124,7 @@ Cores: fundo `#111416`, acento `#9fcbf7`, neutros `#e2e2e6`, `#5b6774`, `#39424c
 O SVG usa `viewBox` do tamanho final, então o retina é só renderizar em dobro; não há reescala de bitmap.
 
 ```sh
-cd ~/Projects/failsafe/assets
+cd ~/Projects/salvocofre/assets
 rsvg-convert -w 128  -h 128  -o icon-128x128.png      src/icon.svg
 rsvg-convert -w 256  -h 256  -o icon-256x256.png      src/icon.svg
 rsvg-convert -w 772  -h 250  -o banner-772x250.png    src/banner.svg
@@ -138,4 +138,4 @@ magick banner-772x250.png -fuzz 3% -trim info:
 magick icon-128x128.png -fuzz 3% -trim info:
 ```
 
-Se o nome do plugin mudar, o banner muda em dois elementos `<text>` de `src/banner.svg` (`FAILSAFE` e `BACKUP`), e o `Text Domain`/slug mudam no código — o desenho não muda.
+Se o nome do plugin mudar, o banner muda em dois elementos `<text>` de `src/banner.svg` (`SALVOCOFRE` e `BACKUP`), e o `Text Domain`/slug mudam no código — o desenho não muda.
