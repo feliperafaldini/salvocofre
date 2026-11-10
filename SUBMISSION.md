@@ -11,7 +11,8 @@
 - Submetido em 2026-10-25 como Failsafe Backup 0.2.0 (slug antigo `failsafe-backup`).
 - Review **pended** em 2026-10-28 por nome/slug: "FailSafe" apontado como possível marca e nome genérico. E-mail pede nome distinto, atualização de readme/header/text domain e **reserva do novo slug**.
 - Renomeado para **Salvocofre Backup** (slug `salvocofre`), versão **0.2.1**; código, readme, pot, build, banners e screenshots atualizados.
-- Falta: responder o e-mail pedindo a reserva do slug, subir `dist/salvocofre-0.2.1.zip` em "Add your plugin" e aguardar a revisão. Depois da aprovação, seguir a seção 3 (SVN).
+- Feito em 2026-11-10: `dist/salvocofre-0.2.1.zip` enviado pelo formulário de review (dashboard: "New version of Salvocofre Backup uploaded for review", versão 0.2.1) e resposta enviada no mesmo thread pedindo a reserva do slug `salvocofre` (cópia em Sent, 05:49 UTC).
+- Falta: aguardar a reserva do slug e a revisão. Depois da aprovação, seguir a seção 3 (SVN).
 
 ## 1. Checklist
 
