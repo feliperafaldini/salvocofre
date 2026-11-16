@@ -1,5 +1,7 @@
 # Salvocofre Backup
 
+[![CI](https://github.com/feliperafaldini/salvocofre/actions/workflows/ci.yml/badge.svg)](https://github.com/feliperafaldini/salvocofre/actions/workflows/ci.yml)
+
 A backup plugin for WordPress. It creates a timestamped set with a `.sql` dump of the database and a `.zip` containing the dump plus the site files, lists and manages backups in the admin, restores the database from a ZIP and can run on a schedule.
 
 This repository holds the plugin and the local development environment. Only the contents of `src/` are published to the WordPress.org plugin directory.

@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: PHP ${{ matrix.php }} lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.0', '8.1', '8.2', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: zip
+          coverage: none
+      - name: PHP lint (src and tests)
+        run: |
+          status=0
+          while IFS= read -r file; do
+            php -l "$file" >/dev/null || status=1
+          done < <(find src tests -name '*.php')
+          exit $status
+      - name: Shell syntax
+        run: |
+          for f in tests/*.sh bin/*.sh; do bash -n "$f"; done
+      - name: Build package
+        run: ./bin/build.sh
